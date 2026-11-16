@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>데이터 분석 수행평가</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- 1. 로그인 -->
+<section class="screen" id="s-login">
+  <div class="center">
+    <div class="card login-card">
+      <div class="logo">📊</div>
+      <h1 id="login-title">데이터 분석 수행평가</h1>
+      <p class="sub" id="login-sub">학번, 이름, 비밀번호 입력</p>
+      <form id="login-form" autocomplete="off">
+        <div class="field"><label for="in-id">학번</label><input class="input" id="in-id" inputmode="numeric" maxlength="5" placeholder="예: 10305"></div>
+        <div class="field"><label for="in-name">이름</label><input class="input" id="in-name" maxlength="20" placeholder="이름"></div>
+        <div class="field"><label for="in-pw">비밀번호</label><input class="input" id="in-pw" type="password" inputmode="numeric" maxlength="4" placeholder="숫자 4자리">
+          <div class="hint">이 사이트 전용 숫자 4자리 (다른 곳에 쓰는 비밀번호 사용 금지)</div></div>
+        <div class="field" id="pw2-field" hidden><label for="in-pw2">비밀번호 확인</label><input class="input" id="in-pw2" type="password" inputmode="numeric" maxlength="4" placeholder="같은 숫자 4자리 한 번 더">
+          <div class="hint">처음 접속, 지금 입력한 번호가 비밀번호로 설정됨</div></div>
+        <div class="error" id="login-error"></div>
+        <button class="btn full" id="login-btn" type="submit">로그인</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 평가 규칙 -->
+<section class="screen" id="s-rules">
+  <div class="wrap">
+    <h1>평가 규칙 확인</h1>
+    <p class="sub">모두 읽은 뒤 시작</p>
+    <div class="card">
+      <ul class="rules">
+        <li><span class="num">1</span><div>데이터 6개 중 골라 <b>시각화 3개</b> 만들기 (같은 데이터 여러 번 사용 가능)</div></li>
+        <li><span class="num">2</span><div><b>그래프 종류 3개 모두 달라야 함</b>, 같은 종류가 있으면 감점</div></li>
+        <li><span class="num">3</span><div>시각화마다 <b>질문, 관찰, 근거, 결론</b> 작성</div></li>
+        <li><span class="num">4</span><div>해석은 <b>직접 입력만 가능</b> (복사, 붙여넣기 불가)</div></li>
+        <li><span class="num">5</span><div class="warn">평가 중 <b>전체 화면 유지</b>. 다른 탭, 다른 창 이동, 화면 분할, 캡처 시도는 모두 선생님께 기록됨</div></li>
+        <li><span class="num">6</span><div>3개 완성 후 제출 가능, <b>제출 후 수정 불가</b></div></li>
+      </ul>
+      <button class="btn full" id="start-btn">전체 화면으로 시작</button>
+    </div>
+  </div>
+</section>
+
+<!-- 3. 내 수행평가 -->
+<section class="screen" id="s-home">
+  <div class="wrap wide">
+    <div class="topbar"><div class="who" id="who"></div><button class="link" id="logout-btn">로그아웃</button></div>
+    <h1>내 수행평가</h1>
+    <p class="sub">시각화 3개 완성 후 제출</p>
+    <div id="dup-notice"></div>
+    <div class="slots" id="slots"></div>
+    <div class="card submit-bar">
+      <div><div style="font-size:18px;font-weight:800;margin-bottom:4px" id="progress-text"></div><div class="muted" id="submit-hint"></div></div>
+      <button class="btn" id="submit-btn" disabled>제출하기</button>
+    </div>
+  </div>
+</section>
+
+<!-- 4. 데이터 선택 -->
+<section class="screen" id="s-data">
+  <div class="wrap wide">
+    <div class="topbar"><button class="link" id="data-back">← 내 수행평가</button><div></div></div>
+    <h1 id="data-title">데이터 선택</h1>
+    <p class="sub">분석할 데이터 1개 클릭</p>
+    <div class="datasets" id="datasets"></div>
+    <div class="source">출처 : Palmer Penguins, Gapminder, Our World in Data, Kaggle Titanic, TidyTuesday</div>
+  </div>
+</section>
+
+<!-- 5. 작업 화면 -->
+<section class="screen" id="s-work">
+  <div id="codap-box"><div class="codap-loading" id="codap-loading"><div class="spinner"></div><div id="codap-loading-text">CODAP 여는 중</div></div></div>
+  <aside class="panel">
+    <div class="panel-head">
+      <div><div class="t" id="w-title">시각화 1</div><div class="d" id="w-data"></div></div>
+      <button class="link" id="w-change-data">데이터 바꾸기</button>
+    </div>
+
+    <div class="card">
+      <div class="step"><span class="n">1</span>그래프 만들기</div>
+      <div class="row"><button class="btn soft md" id="w-add-graph">＋ 그래프 추가</button><button class="btn soft md" id="w-add-map" hidden>＋ 지도 추가</button></div>
+      <div class="tip">표의 속성 이름을 그래프 축으로 끌어다 놓기</div>
+    </div>
+
+    <div class="card">
+      <div class="step"><span class="n">2</span>그래프 종류 선택<span class="ok" id="w-type-ok"></span></div>
+      <div class="chips" id="w-types"></div>
+      <div class="dup-warn" id="w-dup" hidden></div>
+    </div>
+
+    <div class="card">
+      <div class="step"><span class="n">3</span>그래프 가져오기<span class="ok" id="w-graph-ok"></span></div>
+      <button class="btn md full" id="w-grab">그래프 가져오기</button>
+      <div class="tip">그래프를 완성한 뒤 누르기, 다시 누르면 새 그림으로 바뀜</div>
+      <div id="w-preview"></div>
+    </div>
+
+    <div class="card">
+      <div class="step"><span class="n">4</span>해석 쓰기<span class="ok" id="w-text-ok"></span></div>
+      <div id="w-texts"></div>
+    </div>
+
+    <div class="save-row">
+      <button class="btn full" id="w-save">저장하고 나가기</button>
+      <div class="save-state" id="w-save-state"></div>
+    </div>
+  </aside>
+</section>
+
+<!-- 6. 제출 완료 -->
+<section class="screen" id="s-done">
+  <div class="center"><div class="card login-card" style="text-align:center">
+    <div class="done-icon">🎉</div>
+    <h1>제출 완료</h1>
+    <p class="sub" id="done-sub"></p>
+    <button class="btn full gray" id="done-logout">로그아웃</button>
+  </div></div>
+</section>
+
+<!-- 평가 잠김 -->
+<section class="screen" id="s-locked">
+  <div class="center"><div class="card login-card" style="text-align:center">
+    <div class="done-icon">🔒</div>
+    <h1>평가 잠김</h1>
+    <p class="sub">선생님이 평가를 잠금. 저장, 제출 불가</p>
+    <button class="btn full gray" id="locked-logout">로그아웃</button>
+  </div></div>
+</section>
+
+<!-- 경고 화면 -->
+<div class="overlay solid" id="ov-warn">
+  <div class="warn-box">
+    <div class="icon" id="warn-icon">⚠️</div>
+    <h1 id="warn-title">다른 화면 이동 감지</h1>
+    <div class="count" id="warn-count"></div>
+    <p class="sub" id="warn-text">선생님께 기록됨</p>
+    <button class="btn full" id="warn-btn">전체 화면으로 돌아가기</button>
+  </div>
+</div>
+
+<!-- 확인 창 -->
+<div class="overlay" id="ov-confirm">
+  <div class="modal">
+    <h2 id="cf-title"></h2>
+    <p id="cf-text"></p>
+    <div class="btns"><button class="btn gray" id="cf-no">취소</button><button class="btn" id="cf-yes">확인</button></div>
+  </div>
+</div>
+
+<!-- 그래프 고르기 -->
+<div class="overlay" id="ov-pick">
+  <div class="modal wide">
+    <h2>가져올 그래프 선택</h2>
+    <p>그래프가 여러 개, 이 시각화에 쓸 그래프 1개 클릭</p>
+    <div class="pick-list" id="pick-list"></div>
+    <button class="btn gray full" id="pick-cancel">취소</button>
+  </div>
+</div>
+
+<!-- 지도 색 기준 -->
+<div class="overlay" id="ov-map">
+  <div class="modal">
+    <h2>지도 색 기준 선택</h2>
+    <p>지도 그림은 사이트에서 다시 그림. 점 색으로 나타낼 속성 1개 선택</p>
+    <select class="input" id="map-attr" style="margin-bottom:20px"></select>
+    <div class="btns"><button class="btn gray" id="map-cancel">취소</button><button class="btn" id="map-ok">지도 그림 만들기</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/iframe-phone@1.3.1/dist/iframe-phone.js"></script>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script src="js/api.js"></script>
+<script src="js/codap.js"></script>
+<script src="js/guard.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
