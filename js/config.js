@@ -10,14 +10,12 @@ const CONFIG = {
 // 내 컴퓨터(localhost)에서 열면 실제 시트 대신 테스트 모드
 if (['localhost', '127.0.0.1'].includes(location.hostname)) CONFIG.API_URL = '';
 
-const GRAPH_TYPES = ['점그래프', '막대그래프', '히스토그램', '상자그림', '산점도', '선그래프', '지도'];
+const GRAPH_TYPES = ['막대그래프', '히스토그램', '상자그림', '산점도', '선그래프', '지도'];
 
 // 그래프 종류 설명 (시작 전 안내, 작업 화면에서 다시 보기)
 // 과제 데이터와 직접 연결되지 않게 일상 예시만 사용 (데이터 고르기, 만드는 법은 학생 몫)
 const B = '#3182F6', G = '#D1D6DB';
 const GRAPH_GUIDE = [
-  { type: '점그래프', data: '수치 1개', use: '값 하나하나가 어디에 모여 있고 어떻게 퍼져 있는지 볼 때', ex: '우리 반 학생들의 하루 수면 시간',
-    svg: `<line x1="6" y1="44" x2="94" y2="44" stroke="${G}" stroke-width="2"/>${[[14,1],[26,2],[38,4],[50,3],[62,2],[74,1],[86,1]].map(([x,n])=>Array.from({length:n},(_,i)=>`<circle cx="${x}" cy="${38-i*9}" r="4" fill="${B}"/>`).join('')).join('')}` },
   { type: '막대그래프', data: '범주 1개', use: '항목(범주)마다 개수나 크기를 비교할 때', ex: '좋아하는 급식 메뉴별 학생 수',
     svg: `<line x1="6" y1="44" x2="94" y2="44" stroke="${G}" stroke-width="2"/><rect x="14" y="14" width="18" height="30" rx="2" fill="${B}"/><rect x="41" y="26" width="18" height="18" rx="2" fill="${B}"/><rect x="68" y="6" width="18" height="38" rx="2" fill="${B}"/>` },
   { type: '히스토그램', data: '수치 1개', use: '값을 일정한 구간으로 나눠 구간마다 얼마나 많은지 볼 때', ex: '전교생 키를 5cm 단위로 나눠 보기',
