@@ -1,5 +1,5 @@
 // 서버 로직 (Apps Script와 브라우저 테스트 저장소가 같이 사용)
-// store : getStudent, putStudent, listStudents, getAnswers, putAnswer, listAnswers, addLogs, getLogs, getSetting, setSetting, now, hash
+// store : getStudent, putStudent, listStudents, getAnswers, putAnswer, listAnswers, addLogs, getLogs, getSetting, setSetting, now, hash, deleteStudent
 // 비밀번호는 'h:' + 해시로 저장 (store.hash가 비밀 값(pepper)을 섞어 SHA-256 계산). 교사도 원래 비밀번호를 알 수 없음
 function makeServer(store, defaultAdminPw) {
   const hashPw = (id, pw) => 'h:' + store.hash(String(id) + ':' + String(pw));
@@ -115,6 +115,13 @@ function makeServer(store, defaultAdminPw) {
       if (!checkAdmin(req)) return err('관리자 인증 필요');
       store.setSetting('locked', req.locked ? 'true' : 'false'); return { ok: true, locked: !!req.locked };
     },
+    // 학생 삭제 : 계정, 답안, 기록 모두 지움 (되돌릴 수 없음)
+    adminDeleteStudents(req) {
+      if (!checkAdmin(req)) return err('관리자 인증 필요');
+      const ids = (req.ids || []).map(String).filter(id => store.getStudent(id));
+      ids.forEach(id => store.deleteStudent(id));
+      return { ok: true, deleted: ids.length };
+    },
     adminAddStudents(req) {
       if (!checkAdmin(req)) return err('관리자 인증 필요');
       let added = 0, skipped = 0;
@@ -127,7 +134,7 @@ function makeServer(store, defaultAdminPw) {
     },
   };
   return {
-    WRITE_ACTIONS: ['login', 'save', 'submit', 'log', 'adminResetPw', 'adminUnsubmit', 'adminSetLock', 'adminAddStudents'],
+    WRITE_ACTIONS: ['login', 'save', 'submit', 'log', 'adminResetPw', 'adminUnsubmit', 'adminSetLock', 'adminAddStudents', 'adminDeleteStudents'],
     handle(req) {
       const fn = H[req && req.action];
       if (!fn) return err('알 수 없는 요청');

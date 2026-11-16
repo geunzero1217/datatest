@@ -41,6 +41,12 @@ const LocalStore = (() => {
     listAnswers: () => Object.values(db.answers).map(a => Object.assign({}, a)),
     addLogs: rows => { db.logs.push(...rows); save(); },
     getLogs: id => db.logs.filter(l => l.id === id).map(l => Object.assign({}, l)),
+    deleteStudent: id => {
+      delete db.students[id];
+      Object.keys(db.answers).forEach(k => { if (db.answers[k].id === id) delete db.answers[k]; });
+      db.logs = db.logs.filter(l => l.id !== id);
+      save();
+    },
     getSetting: k => db.settings[k],
     setSetting: (k, v) => { db.settings[k] = v; save(); },
   };

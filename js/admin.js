@@ -129,9 +129,23 @@ function render() {
   $('a-csv').disabled = n === 0;
   $('a-csv').textContent = n ? `CSV 내보내기 (${n}명)` : 'CSV 내보내기';
   $('a-sel-bar').innerHTML = n
-    ? `<span><b>${n}명</b> 선택${n !== visSel ? ` (지금 보이는 반 밖 ${n - visSel}명 포함)` : ''}</span><button class="mini" id="a-sel-clear">선택 해제</button>`
-    : '<span class="muted">CSV로 내보낼 학생 체크 (맨 위 칸 체크하면 보이는 반 전체 선택)</span>';
+    ? `<span><b>${n}명</b> 선택${n !== visSel ? ` (지금 보이는 반 밖 ${n - visSel}명 포함)` : ''}</span><button class="mini" id="a-sel-clear">선택 해제</button><button class="mini red" id="a-sel-delete">선택 삭제</button>`
+    : '<span class="muted">CSV로 내보내거나 삭제할 학생 체크 (맨 위 칸 체크하면 보이는 반 전체 선택)</span>';
   if ($('a-sel-clear')) $('a-sel-clear').onclick = () => { A.selected.clear(); render(); };
+  if ($('a-sel-delete')) $('a-sel-delete').onclick = () => deleteStudents([...A.selected]);
+}
+
+async function deleteStudents(ids) {
+  const list = A.students.filter(s => ids.includes(s.id));
+  if (!list.length) return false;
+  const names = list.slice(0, 5).map(s => `${s.id} ${s.name}`).join(', ') + (list.length > 5 ? ` 외 ${list.length - 5}명` : '');
+  if (!(await confirmBox(`학생 ${list.length}명 삭제`, `${names}. 계정, 답안, 그래프, 이탈 기록이 모두 지워지고 되돌릴 수 없음`, '영구 삭제'))) return false;
+  const r = await call('adminDeleteStudents', { ids: list.map(s => s.id) });
+  if (!r.ok) { toast(r.error); return false; }
+  list.forEach(s => A.selected.delete(s.id));
+  toast(`${r.deleted}명 삭제 완료`);
+  await load(true);
+  return true;
 }
 $('a-check-all').onchange = () => {
   const ids = visible().map(s => s.id);
@@ -170,6 +184,7 @@ async function openDetail(id) {
   $('d-logs').innerHTML = logs.length ? logs.map(l => `<tr class="${LEAVE_KINDS.includes(l.kind) ? 'leave' : WARN_KINDS.includes(l.kind) ? '' : 'minor'}">
     <td style="white-space:nowrap">${esc(l.time)}</td><td style="white-space:nowrap">${esc(l.kind)}</td><td>${esc(l.detail)}</td></tr>`).join('')
     : '<tr><td colspan="3" class="muted">기록 없음</td></tr>';
+  $('d-delete').onclick = async () => { if (await deleteStudents([s.id])) $('ov-detail').classList.remove('on'); };
   $('d-unsubmit').onclick = async () => {
     if (!(await confirmBox('제출 취소', `${s.id} ${s.name}, 다시 수정 가능 상태로 변경`, '제출 취소'))) return;
     const r2 = await call('adminUnsubmit', { id: s.id });
