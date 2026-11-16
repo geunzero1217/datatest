@@ -56,6 +56,20 @@ h2 { font-size: 20px; font-weight: 700; margin: 0 0 12px; }
 .rules b { font-weight: 700; }
 .rules .warn { color: var(--red); }
 
+/* 그래프 종류 설명 */
+.guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.guide { background: var(--card); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+.guide-modal .guide { background: var(--bg); }
+.guide .top { display: flex; align-items: center; gap: 14px; }
+.guide svg { width: 100px; height: 50px; flex: none; }
+.guide .name { font-size: 19px; font-weight: 800; }
+.guide .use { font-size: 14px; color: var(--text2); line-height: 1.5; margin-top: 2px; }
+.guide .row2 { font-size: 13px; line-height: 1.6; color: var(--text2); }
+.guide .row2 b { display: inline-block; min-width: 42px; color: var(--blue); font-weight: 700; }
+.guide-foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.guide-link { margin-left: 6px; font-size: 13px; color: var(--blue); }
+.guide-modal { max-width: 1000px; }
+
 /* 상단 */
 .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .who { font-size: 14px; color: var(--text3); }

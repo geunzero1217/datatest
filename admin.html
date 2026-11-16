@@ -36,15 +36,16 @@
         <select class="input sel" id="a-class"></select>
         <button class="btn gray sm" id="a-refresh">새로고침</button>
         <button class="btn gray sm" id="a-add">명단 추가</button>
-        <button class="btn gray sm" id="a-csv">CSV 내보내기</button>
+        <button class="btn gray sm" id="a-csv" disabled>CSV 내보내기</button>
         <button class="btn sm" id="a-lock">평가 잠금</button>
       </div>
     </div>
     <div id="a-lock-notice"></div>
     <div class="stats" id="a-stats"></div>
+    <div class="sel-bar" id="a-sel-bar"></div>
     <div class="card table-card">
       <table class="tbl">
-        <thead><tr><th>학번</th><th>이름</th><th>비밀번호</th><th>진행</th><th>사용한 그래프</th><th>이탈</th><th>상태</th><th></th></tr></thead>
+        <thead><tr><th class="ck"><input type="checkbox" id="a-check-all" title="보이는 학생 모두 선택"></th><th>학번</th><th>이름</th><th>비밀번호</th><th>진행</th><th>사용한 그래프</th><th>이탈</th><th>상태</th><th></th></tr></thead>
         <tbody id="a-rows"></tbody>
       </table>
       <div class="empty" id="a-empty" hidden>학생 없음. 학생이 로그인하거나 명단을 추가하면 표시</div>

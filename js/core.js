@@ -1,12 +1,22 @@
 // 서버 로직 (Apps Script와 브라우저 테스트 저장소가 같이 사용)
-// store : getStudent, putStudent, listStudents, getAnswers, putAnswer, listAnswers, addLogs, getLogs, getSetting, setSetting, now
+// store : getStudent, putStudent, listStudents, getAnswers, putAnswer, listAnswers, addLogs, getLogs, getSetting, setSetting, now, hash
+// 비밀번호는 'h:' + 해시로 저장 (store.hash가 비밀 값(pepper)을 섞어 SHA-256 계산). 교사도 원래 비밀번호를 알 수 없음
 function makeServer(store, defaultAdminPw) {
+  const hashPw = (id, pw) => 'h:' + store.hash(String(id) + ':' + String(pw));
+  function checkPw(s, pw) {
+    if (!s || !s.pw) return false;
+    if (String(s.pw).indexOf('h:') === 0) return String(s.pw) === hashPw(s.id, pw);
+    // 예전 방식(원문 저장)이면 맞을 때 해시로 바꿔 저장
+    if (String(s.pw) !== String(pw)) return false;
+    s.pw = hashPw(s.id, pw); store.putStudent(s);
+    return true;
+  }
+  const publicStudent = s => { const c = Object.assign({}, s); c.hasPw = !!c.pw; delete c.pw; return c; };
   const LEAVE_KINDS = ['탭 이동', '창 이동'];
   const TEXT_KEYS = ['q', 'obs', 'ev', 'concl'];
   const err = msg => ({ ok: false, error: msg });
   const isLocked = () => String(store.getSetting('locked')) === 'true';
   const adminPw = () => store.getSetting('adminPassword') || defaultAdminPw;
-  const complete = a => !!(a && a.data && a.type && a.img && TEXT_KEYS.every(k => String(a[k] || '').trim()));
 
   function state(s) {
     return {
@@ -20,8 +30,7 @@ function makeServer(store, defaultAdminPw) {
   }
   function auth(req) {
     const s = store.getStudent(String(req.id || ''));
-    if (!s || !s.pw || String(s.pw) !== String(req.pw)) return null;
-    return s;
+    return checkPw(s, req.pw) ? s : null;
   }
   function checkAdmin(req) { return String(req.adminPw || '') === String(adminPw()); }
 
@@ -37,8 +46,8 @@ function makeServer(store, defaultAdminPw) {
       if (!s.pw) {
         if (!req.pwConfirm) { if (!store.getStudent(id)) store.putStudent(s); return { ok: true, needSetup: true }; }
         if (String(req.pwConfirm) !== pw) return err('두 비밀번호가 다름');
-        s.pw = pw;
-      } else if (String(s.pw) !== pw) return err('비밀번호가 다름 (잊었으면 선생님께 초기화 요청)');
+        s.pw = hashPw(id, pw);
+      } else if (!checkPw(s, pw)) return err('비밀번호가 다름 (잊었으면 선생님께 초기화 요청)');
       const now = store.now();
       if (!s.firstAt) s.firstAt = now;
       s.lastAt = now;
@@ -64,8 +73,7 @@ function makeServer(store, defaultAdminPw) {
       const s = auth(req); if (!s) return err('로그인 정보 오류, 다시 로그인 필요');
       if (isLocked()) return err('평가가 잠겨 제출 불가');
       if (s.submittedAt) return { ok: true, submittedAt: s.submittedAt };
-      const ans = store.getAnswers(s.id);
-      if (![1, 2, 3].every(n => complete(ans.find(a => Number(a.slot) === n)))) return err('3개 모두 완성해야 제출 가능');
+      // 미완성이어도 제출 가능 (완성 개수는 관리 화면에서 확인)
       s.submittedAt = store.now();
       store.putStudent(s);
       return { ok: true, submittedAt: s.submittedAt };
@@ -82,18 +90,21 @@ function makeServer(store, defaultAdminPw) {
     adminList(req) {
       if (!checkAdmin(req)) return err('관리자 인증 필요');
       const answers = store.listAnswers().map(a => { const c = Object.assign({}, a); c.hasImg = !!c.img; delete c.img; return c; });
-      return { ok: true, locked: isLocked(), students: store.listStudents(), answers };
+      return { ok: true, locked: isLocked(), students: store.listStudents().map(publicStudent), answers };
     },
     adminDetail(req) {
       if (!checkAdmin(req)) return err('관리자 인증 필요');
       const s = store.getStudent(String(req.id)); if (!s) return err('학생 없음');
       const logs = store.getLogs(s.id).sort((a, b) => String(a.time).localeCompare(String(b.time)));
-      return { ok: true, student: s, answers: store.getAnswers(s.id), logs };
+      return { ok: true, student: publicStudent(s), answers: store.getAnswers(s.id), logs };
     },
     adminResetPw(req) {
       if (!checkAdmin(req)) return err('관리자 인증 필요');
       const s = store.getStudent(String(req.id)); if (!s) return err('학생 없음');
-      s.pw = ''; store.putStudent(s); return { ok: true };
+      // 임의의 숫자 4자리로 초기화, 이 응답에서만 교사에게 한 번 보여 줌
+      const tempPw = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+      s.pw = hashPw(s.id, tempPw); store.putStudent(s);
+      return { ok: true, tempPw };
     },
     adminUnsubmit(req) {
       if (!checkAdmin(req)) return err('관리자 인증 필요');

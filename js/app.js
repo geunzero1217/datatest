@@ -50,7 +50,7 @@ function nowStr() {
   const d = new Date(), p = n => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
-const SCREEN_NAMES = { 's-home': '내 수행평가', 's-data': '데이터 선택', 's-work': '작업 화면', 's-rules': '규칙' };
+const SCREEN_NAMES = { 's-home': '내 수행평가', 's-data': '데이터 선택', 's-work': '작업 화면', 's-rules': '규칙', 's-guide': '그래프 설명' };
 function logEvent(kind, detail = '') {
   const where = SCREEN_NAMES[S.screen] ? (S.screen === 's-work' ? `시각화 ${S.slot}` : SCREEN_NAMES[S.screen]) : '';
   S.logQueue.push({ time: nowStr(), kind, detail: [detail, where].filter(Boolean).join(' / ') });
@@ -123,8 +123,20 @@ $('start-btn').onclick = async () => {
   await Guard.enterFullscreen();
   Guard.start();
   logEvent('평가 시작', document.fullscreenElement ? '전체 화면' : '전체 화면 실패');
-  goHome();
+  show('s-guide');
 };
+
+/* ---------- 그래프 종류 설명 ---------- */
+const guideHTML = () => GRAPH_GUIDE.map(g => `<div class="guide">
+  <div class="top"><svg viewBox="0 0 100 50" aria-hidden="true">${g.svg}</svg><div><div class="name">${esc(g.type)}</div><div class="use">${esc(g.use)}</div></div></div>
+  <div class="row2"><b>예시</b>${esc(g.ex)}</div>
+  <div class="row2"><b>만들기</b>${esc(g.how)}</div>
+</div>`).join('');
+$('guide-grid').innerHTML = guideHTML();
+$('guide-grid2').innerHTML = guideHTML();
+$('guide-ok').onclick = () => goHome();
+$('w-guide').onclick = () => $('ov-guide').classList.add('on');
+$('guide-close').onclick = () => $('ov-guide').classList.remove('on');
 
 /* ---------- 내 수행평가 ---------- */
 function goHome() {
@@ -159,12 +171,14 @@ function renderHome() {
   });
   const doneN = [1, 2, 3].filter(n => isComplete(S.answers[n])).length;
   $('progress-text').textContent = `${doneN} / 3 완성`;
-  $('submit-hint').textContent = doneN === 3 ? (dups.length ? '그래프 종류 중복 상태로 제출 가능 (감점 대상)' : '제출 준비 완료') : '3개 완성 후 제출 가능';
-  $('submit-btn').disabled = doneN < 3;
+  $('submit-hint').textContent = doneN === 3 ? (dups.length ? '그래프 종류 중복 상태로 제출 가능 (감점 대상)' : '제출 준비 완료') : `미완성 ${3 - doneN}개, 미완성도 제출 가능 (제출 후 수정 불가)`;
+  $('submit-btn').disabled = false;
 }
 $('submit-btn').onclick = async () => {
   const dups = duplicateTypes();
-  const ok = await confirmBox('제출하기', (dups.length ? `그래프 종류 중복 (${dups.join(', ')}), 감점 대상. ` : '') + '제출 후 수정 불가', '제출');
+  const left = [1, 2, 3].filter(n => !isComplete(S.answers[n]));
+  const warn = (left.length ? `미완성 : 시각화 ${left.join(', ')}. ` : '') + (dups.length ? `그래프 종류 중복 (${dups.join(', ')}), 감점 대상. ` : '');
+  const ok = await confirmBox(left.length ? '미완성 상태로 제출' : '제출하기', warn + '제출 후 수정 불가', '제출');
   if (!ok) return;
   $('submit-btn').disabled = true;
   const r = await API.call('submit', { id: S.id, pw: S.pw });
@@ -214,7 +228,7 @@ $('data-back').onclick = () => { if (S.changingData) show('s-work'); else goHome
 async function pickData(id) {
   if (S.changingData) {
     if (id === S.work.data) { show('s-work'); return; }
-    if (S.work.img && !(await confirmBox('데이터 바꾸기', '데이터를 바꾸면 가져온 그래프 그림 삭제, 해석은 유지', '바꾸기'))) return;
+    if (S.work.img && !(await confirmBox('데이터 바꾸기', '데이터를 바꾸면 저장한 그래프 그림 삭제, 해석은 유지', '바꾸기'))) return;
   }
   openWork(S.slot, id);
 }
@@ -284,7 +298,7 @@ function renderPreview() {
   const w = S.work;
   $('w-preview').innerHTML = w.img ? `<div class="graph-preview"><img src="${w.img}" alt="가져온 그래프">
     <div class="graph-meta">${/^map/.test(w.plotType || '') ? esc(w.plotType.replace(/^map/, '지도')) : `X축 ${esc(w.x || '없음')} / Y축 ${esc(w.y || '없음')}`}</div></div>` : '';
-  $('w-grab').textContent = w.img ? '그래프 다시 가져오기' : '그래프 가져오기';
+  $('w-grab').textContent = w.img ? '다시 저장하기 (새 그림으로 바꾸기)' : '만든 그래프 저장하기';
 }
 function updateChecks() {
   const w = S.work;
@@ -302,10 +316,10 @@ $('w-change-data').onclick = () => openDataSelect(S.slot, true);
 
 $('w-grab').onclick = async () => {
   if (!Codap.contextName) return toast('데이터 불러오는 중');
-  const btn = $('w-grab'); btn.disabled = true; btn.textContent = '가져오는 중';
+  const btn = $('w-grab'); btn.disabled = true; btn.textContent = '저장하는 중';
   try {
     const graphs = await Codap.getGraphs();
-    if (!graphs.length) { toast('그래프 없음, 먼저 그래프 추가'); return; }
+    if (!graphs.length) { toast('CODAP에 그래프 없음, 먼저 ＋ 그래프 추가'); return; }
     const g = graphs.length === 1 ? graphs[0] : await pickGraph(graphs);
     if (!g) return;
     if (g.kind === 'map') {
@@ -314,16 +328,16 @@ $('w-grab').onclick = async () => {
       g.image = await renderMapImage(Codap.table, attr);
       Object.assign(g, { x: '경도(long)', y: '위도(lat)', plotType: attr ? `map (색 : ${attr})` : 'map' });
     }
-    if (!g.image) { toast('그림 가져오기 실패, 그래프를 조금 움직인 뒤 다시 시도'); return; }
+    if (!g.image) { toast('그래프 저장 실패, 그래프를 조금 움직인 뒤 다시 시도'); return; }
     S.work.img = await compressImage(g.image);
     Object.assign(S.work, { x: g.x, y: g.y, plotType: g.plotType });
     S.imgChanged = true; S.dirty = true;
-    logEvent('그래프 가져오기', `${g.plotType || g.kind} X:${g.x || '-'} Y:${g.y || '-'}`);
+    logEvent('그래프 저장', `${g.plotType || g.kind} X:${g.x || '-'} Y:${g.y || '-'}`);
     updateChecks(); setSaveState('저장 안 됨');
     await saveWork(true);
-    toast('그래프 가져오기 완료');
+    toast('그래프 저장 완료');
   } catch (e) {
-    toast('그래프 가져오기 실패 : ' + e.message);
+    toast('그래프 저장 실패 : ' + e.message);
   } finally {
     btn.disabled = false; renderPreview();
   }

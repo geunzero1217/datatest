@@ -6,14 +6,16 @@ const dsTitle = id => (DATASETS.find(d => d.id === id) || {}).title || '';
 const LEAVE_KINDS = ['탭 이동', '창 이동'];
 const WARN_KINDS = ['전체 화면 해제', '창 크기 줄임', '캡처 키', '복사 시도', '붙여넣기 시도', '끌어 놓기 시도', '새로고침'];
 
-const A = { pw: '', students: [], answers: [], locked: false, cls: '', shownPw: {}, timer: null };
+const A = { pw: '', students: [], answers: [], locked: false, cls: '', selected: new Set(), timer: null };
 
 function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); }
 let toastT;
 function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2400); }
-function confirmBox(title, text, yes = '확인') {
+function confirmBox(title, text, yes = '확인', html = '', noCancel = false) {
   return new Promise(res => {
-    $('cf-title').textContent = title; $('cf-text').textContent = text; $('cf-yes').textContent = yes;
+    $('cf-title').textContent = title; $('cf-yes').textContent = yes;
+    $('cf-text').innerHTML = html + esc(text);
+    $('cf-no').hidden = noCancel;
     $('ov-confirm').classList.add('on');
     const done = v => { $('ov-confirm').classList.remove('on'); res(v); };
     $('cf-yes').onclick = () => done(true); $('cf-no').onclick = () => done(false);
@@ -92,10 +94,11 @@ function render() {
   $('a-empty').hidden = list.length > 0;
   $('a-rows').innerHTML = list.map((s, i) => {
     const inf = infos[i];
-    const pw = s.pw ? (A.shownPw[s.id] ? esc(s.pw) : '••••') : '<span class="muted">미설정</span>';
-    return `<tr class="click" data-id="${esc(s.id)}">
+    const on = A.selected.has(s.id);
+    return `<tr class="click ${on ? 'sel' : ''}" data-id="${esc(s.id)}">
+      <td class="ck"><input type="checkbox" data-act="check" ${on ? 'checked' : ''}></td>
       <td>${esc(s.id)}</td><td><b>${esc(s.name)}</b></td>
-      <td><span class="pw">${pw}</span>${s.pw ? `<button class="mini" data-act="show">${A.shownPw[s.id] ? '숨기기' : '보기'}</button><button class="mini red" data-act="reset">초기화</button>` : ''}</td>
+      <td>${s.hasPw ? '<span class="badge gray">설정됨</span> <button class="mini red" data-act="reset">초기화</button>' : '<span class="muted">미설정</span>'}</td>
       <td><div class="prog"><div class="bar"><i style="width:${inf.progress / 3 * 100}%"></i></div>${inf.progress} / 3</div></td>
       <td><div class="types">${inf.ans.map(a => a && a.type ? `<span class="badge ${inf.types.filter(t => t === a.type).length > 1 ? 'orange' : 'gray'}">${esc(a.type)}</span>` : '').join('') || '<span class="muted">-</span>'}</div></td>
       <td>${inf.leave ? `<b style="color:${inf.leave >= CONFIG.LEAVE_WARN ? 'var(--red)' : 'inherit'}">${inf.leave}회</b>` : '<span class="muted">0</span>'}</td>
@@ -105,16 +108,36 @@ function render() {
   }).join('');
   $('a-rows').querySelectorAll('tr').forEach(tr => tr.onclick = async e => {
     const id = tr.dataset.id, act = e.target.dataset && e.target.dataset.act;
-    if (act === 'show') { A.shownPw[id] = !A.shownPw[id]; render(); return; }
+    if (e.target.classList && e.target.classList.contains('ck')) { const cb = e.target.querySelector('input'); cb.checked = !cb.checked; if (cb.checked) A.selected.add(id); else A.selected.delete(id); render(); return; }
+    if (act === 'check') { if (e.target.checked) A.selected.add(id); else A.selected.delete(id); render(); return; }
     if (act === 'reset') {
       const s = A.students.find(x => x.id === id);
-      if (!(await confirmBox('비밀번호 초기화', `${s.id} ${s.name}, 다음 로그인 때 새 비밀번호 설정`, '초기화'))) return;
+      if (!(await confirmBox('비밀번호 초기화', `${s.id} ${s.name}, 임의의 숫자 4자리로 바뀜`, '초기화'))) return;
       const r = await call('adminResetPw', { id });
-      toast(r.ok ? '초기화 완료' : r.error); load(true); return;
+      if (!r.ok) return toast(r.error);
+      await confirmBox('임시 비밀번호', '학생에게 알려 주기. 이 창을 닫으면 다시 볼 수 없음 (필요하면 다시 초기화)', '확인',
+        `<span class="temp-pw" style="display:block">${esc(r.tempPw)}</span><b>${esc(s.id)} ${esc(s.name)}</b><br>`, true);
+      load(true); return;
     }
     openDetail(id);
   });
+  // 선택 상태
+  const visIds = list.map(s => s.id), visSel = visIds.filter(id => A.selected.has(id)).length;
+  $('a-check-all').checked = visIds.length > 0 && visSel === visIds.length;
+  $('a-check-all').indeterminate = visSel > 0 && visSel < visIds.length;
+  const n = A.selected.size;
+  $('a-csv').disabled = n === 0;
+  $('a-csv').textContent = n ? `CSV 내보내기 (${n}명)` : 'CSV 내보내기';
+  $('a-sel-bar').innerHTML = n
+    ? `<span><b>${n}명</b> 선택${n !== visSel ? ` (지금 보이는 반 밖 ${n - visSel}명 포함)` : ''}</span><button class="mini" id="a-sel-clear">선택 해제</button>`
+    : '<span class="muted">CSV로 내보낼 학생 체크 (맨 위 칸 체크하면 보이는 반 전체 선택)</span>';
+  if ($('a-sel-clear')) $('a-sel-clear').onclick = () => { A.selected.clear(); render(); };
 }
+$('a-check-all').onchange = () => {
+  const ids = visible().map(s => s.id);
+  if ($('a-check-all').checked) ids.forEach(id => A.selected.add(id)); else ids.forEach(id => A.selected.delete(id));
+  render();
+};
 
 /* ---------- 상세 ---------- */
 async function openDetail(id) {
@@ -182,7 +205,9 @@ $('add-ok').onclick = async () => {
 };
 
 $('a-csv').onclick = () => {
-  const list = visible();
+  const list = A.students.filter(s => A.selected.has(s.id));
+  if (!list.length) return toast('선택한 학생 없음');
+  const classes = [...new Set(list.map(s => classOf(String(s.id))))];
   const head = ['반', '학번', '이름', '상태', '진행', '이탈 횟수', '그래프 중복', '첫 접속', '제출 시간'];
   [1, 2, 3].forEach(n => head.push(...[`시각화${n} 데이터`, `시각화${n} 그래프 종류`, `시각화${n} X축`, `시각화${n} Y축`, ...TEXT_FIELDS.map(f => `시각화${n} ${f.label}`)]));
   const rows = list.map(s => {
@@ -194,7 +219,7 @@ $('a-csv').onclick = () => {
   const csv = '﻿' + [head, ...rows].map(r => r.map(v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`).join(',')).join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  a.download = `수행평가_${A.cls || '전체'}_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `수행평가_${classes.length === 1 ? classes[0] : '여러 반'}_${list.length}명_${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 };
