@@ -137,9 +137,10 @@ $('start-btn').onclick = async () => {
 
 /* ---------- 그래프 종류 설명 ---------- */
 const guideHTML = () => GRAPH_GUIDE.map(g => `<div class="guide">
-  <div class="top"><svg viewBox="0 0 100 50" aria-hidden="true">${g.svg}</svg><div><div class="name">${esc(g.type)}</div><div class="use">${esc(g.use)}</div></div></div>
-  <div class="row2"><b>데이터</b>${esc(g.data)}</div>
-  <div class="row2"><b>예</b>${esc(g.ex)}</div>
+  <div class="art"><svg viewBox="0 0 100 50" aria-hidden="true">${g.svg}</svg></div>
+  <div class="name">${esc(g.type)}</div>
+  <div class="use">${esc(g.use)}</div>
+  <div class="tags"><span class="tag"><b>데이터</b>${esc(g.data)}</span><span class="tag"><b>예</b>${esc(g.ex)}</span></div>
 </div>`).join('');
 $('guide-grid').innerHTML = guideHTML();
 $('guide-grid2').innerHTML = guideHTML();

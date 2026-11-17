@@ -65,16 +65,32 @@ h2 { font-size: 20px; font-weight: 700; margin: 0 0 12px; }
 .rules .warn { color: var(--red); }
 
 /* 그래프 종류 설명 */
-.guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-bottom: 20px; }
-.guide { background: var(--card); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+/* 큰 화면에서도 꽉 차 보이게 : 넓은 폭 + 세로 가운데 */
+#s-guide .wrap { max-width: 1280px; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding-top: clamp(20px, 4vh, 40px); padding-bottom: clamp(20px, 4vh, 40px); }
+#s-guide h1 { font-size: clamp(28px, 2.4vw, 38px); }
+#s-guide .sub { font-size: clamp(16px, 1.2vw, 19px); margin-bottom: clamp(24px, 3vh, 40px); }
+.guide-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(14px, 1.4vw, 24px); margin-bottom: clamp(20px, 3vh, 36px); }
+.guide { background: var(--card); border-radius: 22px; padding: clamp(16px, 2.2vh, 28px) clamp(18px, 1.6vw, 28px); display: flex; flex-direction: column; gap: clamp(6px, 1vh, 10px); }
 .guide-modal .guide { background: var(--bg); }
-.guide .top { display: flex; align-items: center; gap: 14px; }
-.guide svg { width: 100px; height: 50px; flex: none; }
-.guide .name { font-size: 19px; font-weight: 800; }
-.guide .use { font-size: 14px; color: var(--text2); line-height: 1.5; margin-top: 2px; }
-.guide .row2 { font-size: 13px; line-height: 1.6; color: var(--text2); }
-.guide .row2 b { display: inline-block; min-width: 42px; color: var(--blue); font-weight: 700; }
+.guide .art { background: var(--blue-soft); border-radius: 16px; height: clamp(76px, 12vh, 190px); display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+.guide-modal .guide .art { background: #fff; height: 110px; }
+.guide .art svg { width: 62%; height: 72%; }
+.guide .name { font-size: clamp(20px, 1.6vw, 26px); font-weight: 800; }
+.guide .use { font-size: clamp(14px, 1.05vw, 17px); color: var(--text2); line-height: 1.55; min-height: 3.1em; }
+.guide .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.guide .tag { font-size: clamp(12px, 0.9vw, 14px); background: var(--bg); color: var(--text2); border-radius: 8px; padding: 5px 10px; }
+.guide-modal .guide .tag { background: #fff; }
+.guide .tag b { color: var(--blue); font-weight: 700; margin-right: 4px; }
 .guide-foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+#s-guide .guide-foot .btn { min-width: 220px; }
+@media (max-height: 820px) {
+  #s-guide h1 { font-size: 28px; margin-bottom: 4px; }
+  #s-guide .sub { margin-bottom: 18px; }
+  .guide .art { height: 72px; margin-bottom: 2px; }
+  .guide .use { min-height: 0; }
+}
+@media (max-width: 1000px) { .guide-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .guide-grid { grid-template-columns: 1fr; } .guide-foot { flex-direction: column-reverse; align-items: stretch; } }
 .guide-link { margin-left: 6px; font-size: 13px; color: var(--blue); }
 .guide-modal { max-width: 1000px; }
 
