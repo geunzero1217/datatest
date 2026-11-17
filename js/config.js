@@ -1,7 +1,7 @@
 // 사이트 설정
 const CONFIG = {
   // Apps Script 웹 앱 주소. 비워 두면 브라우저 안 임시 저장소(테스트용)로 동작
-  API_URL: 'https://script.google.com/macros/s/AKfycbyyY_g2M8fl3vRSZPBIyKXbZRRLN1QANkF_evqxLFutd38_NiylIs3eIunzuFwomltupg/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbxpijRseNzEtjTiFMsoNiBC7JhVqlzZivsHncXsHZyp6GCihZ5Vz3AClaAQXqjrAYct/exec',
   CODAP_URL: 'https://codap3.concord.org/',
   LEAVE_WARN: 3, // 이탈 주의 기준 횟수
   AUTOSAVE_SEC: 30,
