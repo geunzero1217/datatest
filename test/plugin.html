@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>수행평가 플러그인 테스트</title>
+<script src="https://unpkg.com/iframe-phone@1.3.1/dist/iframe-phone.js"></script>
+<style>
+  body { font-family: 'Noto Sans KR', sans-serif; font-size: 12px; margin: 8px; }
+  button { font-size: 12px; margin: 2px 0; }
+  #log { white-space: pre-wrap; background: #f2f4f6; padding: 6px; max-height: 220px; overflow: auto; }
+  img { max-width: 100%; border: 1px solid #ccc; }
+</style>
+</head>
+<body>
+<button id="btnGraphs">그래프 가져오기</button>
+<div id="log"></div>
+<div id="preview"></div>
+<script>
+const params = new URLSearchParams(location.search);
+const logEl = document.getElementById('log');
+function log(...a) { logEl.textContent += a.map(x => typeof x === 'string' ? x : JSON.stringify(x)).join(' ') + '\n'; logEl.scrollTop = 1e9; }
+function sendTop(msg) { try { window.top.postMessage(Object.assign({ source: 'pa-plugin' }, msg), '*'); } catch (e) { log('postMessage 실패', e.message); } }
+
+const phone = new iframePhone.IframePhoneRpcEndpoint(() => {}, 'data-interactive', window.parent);
+function call(msg) {
+  return new Promise(resolve => {
+    let done = false;
+    const t = setTimeout(() => { if (!done) { done = true; resolve({ success: false, timeout: true }); } }, 8000);
+    phone.call(msg, r => { if (!done) { done = true; clearTimeout(t); resolve(r); } });
+  });
+}
+
+function parseCSV(text) {
+  text = text.replace(/^﻿/, '');
+  const rows = []; let row = [], cur = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(cur); cur = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; }
+    else cur += c;
+  }
+  if (cur || row.length) { row.push(cur); rows.push(row); }
+  return rows.filter(r => r.length > 1 || r[0] !== '');
+}
+
+async function loadCSV(url, name) {
+  const text = await (await fetch(url)).text();
+  const rows = parseCSV(text);
+  const head = rows[0], body = rows.slice(1);
+  const isNum = head.map((_, j) => body.every(r => r[j] === '' || !isNaN(Number(r[j]))));
+  let r = await call({ action: 'create', resource: 'dataContext', values: {
+    name, title: name,
+    collections: [{ name: 'cases', title: name, attrs: head.map((h, j) => ({ name: h, type: isNum[j] ? 'numeric' : 'categorical' })) }]
+  } });
+  log('dataContext 생성', r.success);
+  const items = body.map(r => Object.fromEntries(head.map((h, j) => [h, isNum[j] && r[j] !== '' ? Number(r[j]) : r[j]])));
+  r = await call({ action: 'create', resource: `dataContext[${name}].item`, values: items });
+  log('item', items.length, '개', r.success);
+  r = await call({ action: 'create', resource: 'component', values: { type: 'caseTable', dataContext: name } });
+  log('caseTable', r.success);
+}
+
+async function getGraphs() {
+  const list = await call({ action: 'get', resource: 'componentList' });
+  log('componentList', list.success, (list.values || []).map(c => `${c.type}:${c.name || c.id}`).join(', '));
+  const graphs = (list.values || []).filter(c => c.type === 'graph');
+  if (!graphs.length) { log('그래프 없음'); sendTop({ type: 'graphs', graphs: [] }); return; }
+  const out = [];
+  for (const g of graphs) {
+    const key = g.name || g.id;
+    const comp = await call({ action: 'get', resource: `component[${key}]` });
+    const v = comp.values || {};
+    log('component', comp.success, { x: v.xAttributeName, y: v.yAttributeName, y2: v.y2AttributeName, legend: v.legendAttributeName, plotType: v.plotType, dataContext: v.dataContext });
+    let disp = await call({ action: 'get', resource: `dataDisplay[${key}]` });
+    if (!disp.success && g.id != null) disp = await call({ action: 'get', resource: `dataDisplay[${g.id}]` });
+    const uri = disp.values && disp.values.exportDataUri;
+    log('dataDisplay', disp.success, uri ? `이미지 ${Math.round(uri.length / 1024)}KB ${uri.slice(0, 22)}` : JSON.stringify(disp).slice(0, 200));
+    out.push({ id: g.id, name: g.name, title: g.title, x: v.xAttributeName || null, y: v.yAttributeName || null, legend: v.legendAttributeName || null, image: uri || null, raw: v });
+  }
+  const last = out[out.length - 1];
+  document.getElementById('preview').innerHTML = last.image ? `<img src="${last.image}">` : '';
+  sendTop({ type: 'graphs', graphs: out });
+}
+
+document.getElementById('btnGraphs').onclick = getGraphs;
+window.addEventListener('message', e => { if (e.data && e.data.source === 'pa-site' && e.data.type === 'getGraphs') getGraphs(); });
+
+(async () => {
+  const r = await call({ action: 'update', resource: 'interactiveFrame', values: { name: 'pa-plugin', title: '수행평가 연결', dimensions: { width: 280, height: 320 }, preventDataContextReorg: false } });
+  log('연결', r.success ? '성공' : JSON.stringify(r));
+  sendTop({ type: 'ready', ok: !!r.success });
+  const csv = params.get('csv');
+  if (csv) await loadCSV(csv, params.get('name') || 'data');
+})();
+</script>
+</body>
+</html>

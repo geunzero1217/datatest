@@ -1,0 +1,7 @@
+node_modules/
+chrome-profile/
+chrome-pdf/
+lesson.html
+pdfview.html
+docx-word.pdf
+package-lock.json

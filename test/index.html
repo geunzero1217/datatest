@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>CODAP 임베드 테스트</title>
+<style>
+  body { margin: 0; font-family: 'Noto Sans KR', sans-serif; background: #F2F4F6; display: flex; height: 100vh; }
+  #left { flex: 1; } iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+  #right { width: 340px; padding: 12px; overflow: auto; font-size: 13px; }
+  select, button { width: 100%; margin: 4px 0; padding: 6px; }
+  button { background: #3182F6; color: #fff; border: 0; border-radius: 8px; font-weight: 700; }
+  #log { white-space: pre-wrap; background: #fff; padding: 6px; font-size: 11px; }
+  img { max-width: 100%; background: #fff; }
+</style>
+</head>
+<body>
+<div id="left"><iframe id="codap" allow="clipboard-read; clipboard-write"></iframe></div>
+<div id="right">
+  <select id="ver"><option value="v2">CODAP v2</option><option value="v3">CODAP v3</option></select>
+  <select id="data">
+    <option value="penguins">남극펭귄</option><option value="gapminder">출산율과기대수명</option><option value="co2">탄소배출과에너지</option>
+    <option value="titanic">타이타닉</option><option value="fastfood">패스트푸드영양</option><option value="songs">인기노래</option>
+  </select>
+  <select id="mode">
+    <option value="A">A: ?url=CSV</option>
+    <option value="A+di">A + 플러그인(di)</option>
+    <option value="B">B: 플러그인이 데이터 생성</option>
+  </select>
+  <button id="open">열기</button>
+  <button id="grab">그래프 가져오기</button>
+  <div id="src"></div>
+  <div id="result"></div>
+  <div id="log"></div>
+</div>
+<script>
+const BASE = location.origin;
+const CODAP = { v2: 'https://codap.concord.org/releases/latest/static/dg/en/cert/index.html', v3: 'https://codap3.concord.org/' };
+const $ = id => document.getElementById(id);
+function log(s) { $('log').textContent += s + '\n'; }
+
+$('open').onclick = () => {
+  const ver = $('ver').value, d = $('data').value, mode = $('mode').value;
+  const csv = `${BASE}/data/${d}.csv`;
+  const plugin = `${BASE}/test/plugin.html`;
+  const q = new URLSearchParams({ embeddedMode: 'yes' });
+  if (mode === 'A' || mode === 'A+di') q.set('url', csv);
+  if (mode === 'A+di') q.set('di', plugin);
+  if (mode === 'B') q.set('di', `${plugin}?csv=${encodeURIComponent(csv)}&name=${d}`);
+  const src = `${CODAP[ver]}?${q}`;
+  $('src').textContent = src; log('열기 ' + ver + ' ' + mode);
+  $('codap').src = src;
+};
+
+function broadcast(win, msg) {
+  try { for (let i = 0; i < win.frames.length; i++) { win.frames[i].postMessage(msg, '*'); broadcast(win.frames[i], msg); } } catch (e) {}
+}
+$('grab').onclick = () => broadcast($('codap').contentWindow, { source: 'pa-site', type: 'getGraphs' });
+
+window.addEventListener('message', e => {
+  const m = e.data; if (!m || m.source !== 'pa-plugin') return;
+  if (m.type === 'ready') log('플러그인 연결: ' + m.ok);
+  if (m.type === 'graphs') {
+    log('그래프 ' + m.graphs.length + '개 수신');
+    window.lastGraphs = m.graphs;
+    $('result').innerHTML = m.graphs.map(g => `<div><b>${g.title || g.name}</b> X: ${g.x} / Y: ${g.y}<br>${g.image ? `<img src="${g.image}">` : '이미지 없음'}</div>`).join('');
+  }
+});
+</script>
+</body>
+</html>
