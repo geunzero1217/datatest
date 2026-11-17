@@ -47,27 +47,43 @@ const LocalStore = (() => {
       db.logs = db.logs.filter(l => l.id !== id);
       save();
     },
+    seen: (() => { const s = new Set(); return k => { if (s.has(k)) return true; s.add(k); return false; }; })(),
     getSetting: k => db.settings[k],
     setSetting: (k, v) => { db.settings[k] = v; save(); },
   };
 })();
 const LocalServer = makeServer(LocalStore, '1234');
 
+// 구글 서버가 가끔 응답 없이 멈추는 경우가 있어서(측정 시 약 15%), 일정 시간 뒤 끊고 다시 보냄
+// 다시 보내도 결과가 같은 요청만 재시도 (임시 비밀번호 초기화는 매번 새 번호라 제외)
+const RETRY_SAFE = ['login', 'save', 'submit', 'log', 'adminLogin', 'adminList', 'adminDetail', 'adminSetLock', 'adminUnsubmit', 'adminAddStudents', 'adminDeleteStudents'];
+const TIMEOUTS = [12000, 20000, 30000];
+
 const API = {
   isLocal: !CONFIG.API_URL,
-  async call(action, data = {}) {
+  // onRetry(n) : n번째 다시 보내기 직전에 호출 (화면에 "다시 시도 중" 표시용)
+  async call(action, data = {}, onRetry) {
     const req = Object.assign({ action }, data);
     if (!CONFIG.API_URL) {
       LocalStore.reload();
       await new Promise(r => setTimeout(r, 120));
       return JSON.parse(JSON.stringify(LocalServer.handle(req)));
     }
-    try {
-      // text/plain으로 보내야 Apps Script에서 CORS 사전 요청이 생기지 않음
-      const res = await fetch(CONFIG.API_URL, { method: 'POST', body: JSON.stringify(req) });
-      return await res.json();
-    } catch (e) {
-      return { ok: false, error: '서버 연결 실패, 인터넷 확인 후 다시 시도', network: true };
+    const tries = RETRY_SAFE.includes(action) ? TIMEOUTS.length : 1;
+    for (let i = 0; i < tries; i++) {
+      if (i > 0 && onRetry) onRetry(i);
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), TIMEOUTS[i]);
+      try {
+        // text/plain으로 보내야 Apps Script에서 CORS 사전 요청이 생기지 않음
+        const res = await fetch(CONFIG.API_URL, { method: 'POST', body: JSON.stringify(req), signal: ctrl.signal, cache: 'no-store' });
+        const text = await res.text();
+        clearTimeout(timer);
+        try { return JSON.parse(text); } catch (e) { /* 구글 오류 페이지면 다시 시도 */ }
+      } catch (e) {
+        clearTimeout(timer);
+      }
     }
+    return { ok: false, error: '서버 응답 없음, 잠시 후 다시 시도', network: true };
   },
 };

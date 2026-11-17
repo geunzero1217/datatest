@@ -32,7 +32,7 @@ function makeServer(store, defaultAdminPw) {
     const s = store.getStudent(String(req.id || ''));
     return checkPw(s, req.pw) ? s : null;
   }
-  function checkAdmin(req) { return String(req.adminPw || '') === String(adminPw()); }
+  function checkAdmin(req) { const p = String(adminPw() || ''); return p !== '' && String(req.adminPw || '') === p; }
 
   const H = {
     login(req) {
@@ -80,6 +80,8 @@ function makeServer(store, defaultAdminPw) {
     },
     log(req) {
       const s = auth(req); if (!s) return err('로그인 정보 오류');
+      // 응답이 끊겨 같은 묶음을 다시 보낸 경우 두 번 세지 않음
+      if (req.batchId && store.seen && store.seen(String(s.id) + ':' + String(req.batchId))) return { ok: true, leaveCount: Number(s.leaveCount || 0), dup: true };
       const events = (req.events || []).slice(0, 50);
       const add = events.filter(e => LEAVE_KINDS.includes(e.kind)).length;
       store.addLogs(events.map(e => ({ time: String(e.time || store.now()), id: s.id, kind: String(e.kind || ''), detail: String(e.detail || '').slice(0, 200) })));

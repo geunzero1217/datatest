@@ -57,12 +57,18 @@ function logEvent(kind, detail = '') {
   flushLogs();
 }
 async function flushLogs() {
-  if (S.sending || !S.logQueue.length || !S.id) return;
+  if (S.sending || !S.id) return;
+  // 실패한 묶음은 같은 번호(batchId)로 다시 보내서 서버가 두 번 세지 않게 함
+  if (!S.pendingBatch) {
+    if (!S.logQueue.length) return;
+    S.pendingBatch = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), events: S.logQueue.splice(0, 50) };
+  }
   S.sending = true;
-  const batch = S.logQueue.splice(0, 50);
-  const r = await API.call('log', { id: S.id, pw: S.pw, events: batch });
+  const b = S.pendingBatch;
+  const r = await API.call('log', { id: S.id, pw: S.pw, events: b.events, batchId: b.id });
   S.sending = false;
-  if (!r.ok) { S.logQueue.unshift(...batch); setTimeout(flushLogs, 10000); return; }
+  if (!r.ok) { setTimeout(flushLogs, 10000); return; }
+  S.pendingBatch = null;
   if (r.leaveCount > Guard.leaveCount) Guard.leaveCount = r.leaveCount;
   if (S.logQueue.length) flushLogs();
 }
@@ -368,7 +374,13 @@ function pickGraph(graphs) {
   });
 }
 
+// 저장은 한 번에 하나씩 (자동 저장 중에 버튼을 눌러도 두 번 보내지 않음)
 async function saveWork(silent) {
+  while (S.savingP) await S.savingP.catch(() => {});
+  S.savingP = doSave(silent);
+  try { return await S.savingP; } finally { S.savingP = null; }
+}
+async function doSave(silent) {
   if (!S.work || !S.slot) return true;
   const w = S.work;
   const answer = { data: w.data, type: w.type || '', x: w.x || '', y: w.y || '', plotType: w.plotType || '', q: w.q || '', obs: w.obs || '', ev: w.ev || '', concl: w.concl || '' };
@@ -376,7 +388,7 @@ async function saveWork(silent) {
   const wasImgChanged = S.imgChanged;
   S.dirty = false; S.imgChanged = false;
   setSaveState('저장 중');
-  const r = await API.call('save', { id: S.id, pw: S.pw, slot: S.slot, answer });
+  const r = await API.call('save', { id: S.id, pw: S.pw, slot: S.slot, answer }, n => setSaveState(`연결이 느려 다시 저장 중 (${n}번째)`));
   if (!r.ok) {
     S.dirty = true; S.imgChanged = S.imgChanged || wasImgChanged;
     setSaveState('저장 실패');
@@ -395,9 +407,10 @@ function startAutosave() {
 function stopAutosave() { clearInterval(S.autosaveTimer); S.autosaveTimer = null; }
 
 $('w-save').onclick = async () => {
-  $('w-save').disabled = true;
-  const ok = await saveWork(false);
-  $('w-save').disabled = false;
+  $('w-save').disabled = true; $('w-save').textContent = '저장 중';
+  if (S.savingP) await S.savingP.catch(() => {}); // 자동 저장이 진행 중이면 그것만 기다림
+  const ok = S.dirty ? await saveWork(false) : true; // 바뀐 게 없으면 바로 나감
+  $('w-save').disabled = false; $('w-save').textContent = '저장하고 나가기';
   if (ok) { toast(isComplete(S.answers[S.slot]) ? `시각화 ${S.slot} 완성` : '저장 완료'); goHome(); }
 };
 
