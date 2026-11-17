@@ -3,6 +3,8 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const dsById = id => DATASETS.find(d => d.id === id);
 const TEXT_KEYS = TEXT_FIELDS.map(f => f.key);
+const DONE_MARK = `${icon('check', 16)} 완료`;
+fillIcons();
 
 const S = {
   id: '', name: '', pw: '',
@@ -155,7 +157,7 @@ function renderHome() {
   $('who').textContent = `${S.id} ${S.name}`;
   const dups = duplicateTypes();
   $('dup-notice').innerHTML = dups.length
-    ? `<div class="notice red">⚠️ 그래프 종류 중복 (${esc(dups.join(', '))}), 제출 가능하지만 감점 대상</div>` : '';
+    ? `<div class="notice red">${icon('warning', 20)} 그래프 종류 중복 (${esc(dups.join(', '))}), 제출 가능하지만 감점 대상</div>` : '';
   $('slots').innerHTML = [1, 2, 3].map(n => {
     const a = S.answers[n], ds = dsById(a.data);
     const done = isComplete(a), started = !!a.data;
@@ -255,7 +257,7 @@ function openDataSelect(slot, changing = false) {
   $('data-back').textContent = changing ? '← 작업 화면으로' : '← 내 수행평가';
   $('datasets').innerHTML = DATASETS.map(d => `
     <button class="card ds" data-id="${d.id}">
-      <div class="emoji">${d.emoji}</div>
+      <div class="emoji">${icon(d.id, 48)}</div>
       <div class="name">${esc(d.title)}</div>
       <div class="desc">${esc(d.desc)}</div>
       <div class="attrs"><b>범주</b> ${esc(d.cat.join(', '))}<br><b>수치</b> ${esc(d.num.join(', '))}</div>
@@ -302,14 +304,14 @@ async function loadCodap() {
     await Codap.loadData(ds);
     $('codap-loading').style.display = 'none';
   } catch (e) {
-    $('codap-loading').innerHTML = `<div style="font-size:40px">😥</div><div>${esc(e.message)}</div><button class="btn md" id="codap-retry">다시 시도</button>`;
+    $('codap-loading').innerHTML = `${icon('error', 48)}<div>${esc(e.message)}</div><button class="btn md" id="codap-retry">다시 시도</button>`;
     $('codap-retry').onclick = () => loadCodap();
   }
 }
 function renderWork() {
   const w = S.work, ds = dsById(w.data);
   $('w-title').textContent = `시각화 ${S.slot}`;
-  $('w-data').textContent = `${ds.emoji} ${ds.title}`;
+  $('w-data').innerHTML = `${icon(ds.id, 20)} ${esc(ds.title)}`;
   $('w-add-map').hidden = !ds.map;
   renderTypes();
   renderPreview();
@@ -332,7 +334,7 @@ function renderTypes() {
   });
   const dupWith = S.work.type && used[S.work.type];
   $('w-dup').hidden = !dupWith;
-  if (dupWith) $('w-dup').textContent = `⚠️ 시각화 ${dupWith.join(', ')}와 같은 종류, 감점 대상`;
+  if (dupWith) $('w-dup').innerHTML = `${icon('warning', 16)} 시각화 ${dupWith.join(', ')}와 같은 종류, 감점 대상`;
 }
 function renderPreview() {
   const w = S.work;
@@ -342,10 +344,10 @@ function renderPreview() {
 }
 function updateChecks() {
   const w = S.work;
-  $('w-type-ok').textContent = w.type ? '✓ 완료' : '';
-  $('w-graph-ok').textContent = w.img ? '✓ 완료' : '';
+  $('w-type-ok').innerHTML = w.type ? DONE_MARK : '';
+  $('w-graph-ok').innerHTML = w.img ? DONE_MARK : '';
   const n = textCount(w);
-  $('w-text-ok').textContent = n === 4 ? '✓ 완료' : `${n} / 4`;
+  $('w-text-ok').innerHTML = n === 4 ? DONE_MARK : `${n} / 4`;
   TEXT_FIELDS.forEach(f => { const c = $('cnt-' + f.key); if (c) c.textContent = `${String(w[f.key] || '').trim().length}자`; });
 }
 function setSaveState(t) { $('w-save-state').textContent = t; }
@@ -399,7 +401,7 @@ function pickMapAttr() {
 function pickGraph(graphs) {
   return new Promise(resolve => {
     $('pick-list').innerHTML = graphs.map((g, i) => `<button class="pick" data-i="${i}">
-      ${g.image ? `<img src="${g.image}" alt="">` : `<div class="noimg">${g.kind === 'map' ? '🗺️ 선택하면 지도 그림 생성' : '그림 없음'}</div>`}
+      ${g.image ? `<img src="${g.image}" alt="">` : `<div class="noimg">${g.kind === 'map' ? icon('map', 32) + '<br>선택하면 지도 그림 생성' : '그림 없음'}</div>`}
       <div class="m">${g.kind === 'map' ? '지도' : `X축 ${esc(g.x || '없음')} / Y축 ${esc(g.y || '없음')}`}</div></button>`).join('');
     $('ov-pick').classList.add('on');
     const done = v => { $('ov-pick').classList.remove('on'); resolve(v); };
@@ -453,14 +455,14 @@ Guard.onEvent = (kind, detail) => logEvent(kind, detail);
 Guard.onWarn = (type, info) => {
   const ov = $('ov-warn');
   if (type === 'leave') {
-    $('warn-icon').textContent = '⚠️';
+    $('warn-icon').innerHTML = icon('warning', 72);
     $('warn-title').textContent = '다른 화면 이동 감지';
     $('warn-count').hidden = false;
     $('warn-count').textContent = `${info.count}번째 이동`;
     $('warn-text').textContent = '선생님께 기록됨, 반복 시 감점 대상';
     ov.dataset.type = 'leave';
   } else if (!ov.classList.contains('on') || ov.dataset.type !== 'leave') {
-    $('warn-icon').textContent = '🖥️';
+    $('warn-icon').innerHTML = icon('screen', 72);
     $('warn-title').textContent = '전체 화면 해제됨';
     $('warn-count').hidden = true;
     $('warn-text').textContent = '전체 화면에서만 평가 진행 가능, 해제 기록이 선생님께 전달됨';

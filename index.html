@@ -4,9 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>데이터 분석 수행평가</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/spoqa/spoqa-han-sans@3.3.0/css/SpoqaHanSansNeo.css">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -15,7 +13,7 @@
 <section class="screen" id="s-login">
   <div class="center">
     <div class="card login-card">
-      <div class="logo">📊</div>
+      <div class="logo" data-icon="chart" data-size="56"></div>
       <h1 id="login-title">데이터 분석 수행평가</h1>
       <p class="sub" id="login-sub">학번, 이름, 비밀번호 입력</p>
       <form id="login-form" autocomplete="off">
@@ -130,7 +128,7 @@
 <!-- 6. 제출 완료 -->
 <section class="screen" id="s-done">
   <div class="center"><div class="card login-card" style="text-align:center">
-    <div class="done-icon">🎉</div>
+    <div class="done-icon" data-icon="done" data-size="72"></div>
     <h1>제출 완료</h1>
     <p class="sub" id="done-sub"></p>
     <div id="done-req" class="req-box"></div>
@@ -141,7 +139,7 @@
 <!-- 평가 잠김 -->
 <section class="screen" id="s-locked">
   <div class="center"><div class="card login-card" style="text-align:center">
-    <div class="done-icon">🔒</div>
+    <div class="done-icon" data-icon="lock" data-size="72"></div>
     <h1>평가 닫힘</h1>
     <p class="sub">지금은 수행평가 시간이 아님. 선생님이 평가를 열면 접속 가능</p>
     <button class="btn full gray" id="locked-logout">로그아웃</button>
@@ -151,7 +149,7 @@
 <!-- 경고 화면 -->
 <div class="overlay solid" id="ov-warn">
   <div class="warn-box">
-    <div class="icon" id="warn-icon">⚠️</div>
+    <div class="icon" id="warn-icon"></div>
     <h1 id="warn-title">다른 화면 이동 감지</h1>
     <div class="count" id="warn-count"></div>
     <p class="sub" id="warn-text">선생님께 기록됨</p>
@@ -203,6 +201,7 @@
 <script src="js/config.js"></script>
 <script src="js/core.js"></script>
 <script src="js/api.js"></script>
+<script src="js/icons.js"></script>
 <script src="js/codap.js"></script>
 <script src="js/guard.js"></script>
 <script src="js/app.js"></script>

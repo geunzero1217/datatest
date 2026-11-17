@@ -2,6 +2,7 @@
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const TEXT_KEYS = TEXT_FIELDS.map(f => f.key);
+fillIcons();
 const dsTitle = id => (DATASETS.find(d => d.id === id) || {}).title || '';
 const LEAVE_KINDS = ['탭 이동', '창 이동'];
 const WARN_KINDS = ['전체 화면 해제', '창 크기 줄임', '캡처 키', '복사 시도', '붙여넣기 시도', '끌어 놓기 시도', '새로고침'];
@@ -114,7 +115,7 @@ function render() {
   $('a-open-state').textContent = A.locked ? '평가 닫힘' : '평가 열림';
   $('a-lock').textContent = A.locked ? '평가 열기' : '평가 닫기';
   $('a-lock').className = 'btn sm ' + (A.locked ? '' : 'red');
-  $('a-lock-notice').innerHTML = A.locked ? '<div class="notice red">🔒 평가 닫힘 : 학생이 로그인해도 작성, 저장, 제출 불가 (제출한 학생의 수정 요청은 가능)</div>' : '';
+  $('a-lock-notice').innerHTML = A.locked ? `<div class="notice red">${icon('lock', 20)} 평가 닫힘 : 학생이 로그인해도 작성, 저장, 제출 불가 (제출한 학생의 수정 요청은 가능)</div>` : '';
   renderRequests();
   const list = visible(), infos = list.map(infoOf);
   const cnt = f => infos.filter(f).length;

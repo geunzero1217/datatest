@@ -7,10 +7,18 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
-body { font-family: 'Noto Sans KR', -apple-system, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+body { font-family: 'Spoqa Han Sans Neo', -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
 button { font-family: inherit; cursor: pointer; }
 input, textarea, select { font-family: inherit; }
 
+.ico { display: inline-block; vertical-align: middle; flex: none; }
+.logo .ico, .done-icon .ico, .warn-box .icon .ico, .ds .emoji .ico { display: block; }
+.done-icon .ico, .warn-box .icon .ico { margin: 0 auto; }
+.step .ok { display: inline-flex; align-items: center; gap: 4px; }
+.step { white-space: nowrap; }
+.step .guide-link { font-size: 12px; margin-left: 2px; padding: 2px; }
+.dup-warn { display: flex; align-items: center; gap: 6px; }
+.panel-head .d { display: flex; align-items: center; gap: 6px; }
 .screen { display: none; min-height: 100vh; }
 .screen.on { display: block; }
 .wrap { max-width: 720px; margin: 0 auto; padding: 56px 24px 80px; }

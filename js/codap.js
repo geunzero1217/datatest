@@ -148,9 +148,9 @@ async function renderMapImage(table, colorAttr) {
   });
   // 범례
   const ly = c.height - legendH + 22;
-  g.fillStyle = '#191F28'; g.font = 'bold 24px "Noto Sans KR", sans-serif'; g.textBaseline = 'middle';
+  g.fillStyle = '#191F28'; g.font = 'bold 24px "Spoqa Han Sans Neo", sans-serif'; g.textBaseline = 'middle';
   g.fillText(ci >= 0 ? `색 : ${colorAttr}` : '지도', 16, ly);
-  g.font = '21px "Noto Sans KR", sans-serif';
+  g.font = '21px "Spoqa Han Sans Neo", sans-serif';
   if (ci >= 0 && num) {
     const x0 = 16, w = 320, y0 = ly + 34;
     const grad = g.createLinearGradient(x0, 0, x0 + w, 0);
