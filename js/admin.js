@@ -24,7 +24,7 @@ function confirmBox(title, text, yes = '확인', html = '', noCancel = false) {
 }
 async function call(action, data = {}) {
   const r = await API.call(action, Object.assign({ adminPw: A.pw }, data));
-  if (!r.ok && /관리자 인증/.test(r.error || '')) { sessionStorage.removeItem('pa-admin'); location.reload(); }
+  if (!r.ok && /관리자 인증/.test(r.error || '')) { sessionStorage.removeItem(CONFIG.KEY + '-admin'); location.reload(); }
   return r;
 }
 
@@ -80,7 +80,7 @@ $('a-login-form').addEventListener('submit', async e => {
   A.pw = $('a-pw').value;
   const r = await API.call('adminLogin', { adminPw: A.pw });
   if (!r.ok) return ($('a-login-error').textContent = r.error);
-  try { sessionStorage.setItem('pa-admin', A.pw); } catch (err) {}
+  try { sessionStorage.setItem(CONFIG.KEY + '-admin', A.pw); } catch (err) {}
   start();
 });
 async function start() {
@@ -283,7 +283,7 @@ $('a-csv').onclick = () => {
 /* ---------- 시작 ---------- */
 (async () => {
   let saved = null;
-  try { saved = sessionStorage.getItem('pa-admin'); } catch (e) {}
+  try { saved = sessionStorage.getItem(CONFIG.KEY + '-admin'); } catch (e) {}
   if (saved) { A.pw = saved; const r = await API.call('adminLogin', { adminPw: saved }); if (r.ok) return start(); }
   show('a-login');
   if (API.isLocal) $('a-login-error').textContent = '테스트 모드 (서버 미연결), 비밀번호 1234';

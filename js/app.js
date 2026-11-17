@@ -78,7 +78,7 @@ async function flushLogs() {
 /* ---------- 로그인 ---------- */
 function resetLoginForm() {
   $('pw2-field').hidden = true; $('in-pw2').value = '';
-  $('login-title').textContent = '데이터 분석 수행평가';
+  $('login-title').textContent = '데이터 분석 수행평가' + CONFIG.TITLE_SUFFIX;
   $('login-sub').textContent = '학번, 이름, 비밀번호 입력';
   $('login-btn').textContent = '로그인';
   $('login-error').textContent = '';
@@ -107,7 +107,7 @@ $('login-form').addEventListener('submit', async e => {
     return;
   }
   S.id = id; S.name = name; S.pw = pw;
-  try { sessionStorage.setItem('pa-session', JSON.stringify({ id, name, pw })); } catch (err) {}
+  try { sessionStorage.setItem(CONFIG.KEY + '-session', JSON.stringify({ id, name, pw })); } catch (err) {}
   afterLogin(r);
 });
 
@@ -238,7 +238,7 @@ async function checkRequest() {
 }
 function logout() {
   Guard.stop(); stopAutosave(); Codap.close();
-  try { sessionStorage.removeItem('pa-session'); } catch (e) {}
+  try { sessionStorage.removeItem(CONFIG.KEY + '-session'); } catch (e) {}
   location.reload();
 }
 $('logout-btn').onclick = async () => { if (await confirmBox('로그아웃', '작성한 내용은 저장되어 있음', '로그아웃')) logout(); };
@@ -261,7 +261,7 @@ function openDataSelect(slot, changing = false) {
       <div class="emoji">${icon(d.id, 48)}</div>
       <div class="name">${esc(d.title)}</div>
       <div class="desc">${esc(d.desc)}</div>
-      <div class="attrs"><b>범주</b> ${esc(d.cat.join(', '))}<br><b>수치</b> ${esc(d.num.join(', '))}</div>
+      <div class="attrs"><b>범주</b> ${esc(d.cat.join(', ') || '없음')}<br><b>수치</b> ${esc(d.num.join(', '))}</div>
       <div class="rows">${d.rows}개 행${d.map ? ', 지도 가능' : ''}</div>
     </button>`).join('');
   $('datasets').querySelectorAll('.ds').forEach(b => b.onclick = () => pickData(b.dataset.id));
@@ -485,14 +485,14 @@ window.addEventListener('beforeunload', e => {
 Guard.init();
 (async () => {
   let sess = null;
-  try { sess = JSON.parse(sessionStorage.getItem('pa-session')); } catch (e) {}
+  try { sess = JSON.parse(sessionStorage.getItem(CONFIG.KEY + '-session')); } catch (e) {}
   if (sess && sess.id) {
     const r = await API.call('login', sess);
     if (r.ok && !r.needSetup) {
       Object.assign(S, { id: sess.id, name: sess.name, pw: sess.pw });
       return afterLogin(r, true);
     }
-    try { sessionStorage.removeItem('pa-session'); } catch (e) {}
+    try { sessionStorage.removeItem(CONFIG.KEY + '-session'); } catch (e) {}
   }
   show('s-login');
   $('in-id').focus();

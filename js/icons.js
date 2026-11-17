@@ -49,6 +49,32 @@ const ICON_SVG = {
     <ellipse cx="14" cy="34" rx="6" ry="4.6" fill="#7B61FF" transform="rotate(-18 14 34)"/>
     <ellipse cx="34" cy="30" rx="6" ry="4.6" fill="#A99BFF" transform="rotate(-18 34 30)"/>`,
 
+  // 테스트(연습) 사이트 데이터 6개
+  iris: `<path d="M24 44 V26" stroke="#00A661" stroke-width="3" stroke-linecap="round"/>
+    <path d="M24 36 q-8 -1 -11 -8 q8 0 11 8z" fill="#5BD08F"/>
+    <path d="M24 24 C17 22 14 14 18 7 C22 10 24 16 24 24 Z" fill="#7B61FF"/>
+    <path d="M24 24 C31 22 34 14 30 7 C26 10 24 16 24 24 Z" fill="#7B61FF"/>
+    <path d="M24 24 C18 26 9 24 6 17 C12 15 19 18 24 24 Z" fill="#A99BFF"/>
+    <path d="M24 24 C30 26 39 24 42 17 C36 15 29 18 24 24 Z" fill="#A99BFF"/>
+    <circle cx="24" cy="21" r="2.6" fill="#FFD43B"/>`,
+  healthexp: `<path d="M24 42 C12 33 5 26 5 17 a9.5 9.5 0 0 1 19 -3 a9.5 9.5 0 0 1 19 3 C43 26 36 33 24 42 Z" fill="#F04452"/>
+    <polyline points="8,22 16,22 19,16 24,29 28,19 31,22 40,22" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+  quakes: `<rect x="4" y="8" width="40" height="32" rx="7" fill="#333D4B"/>
+    <polyline points="8,24 13,24 16,20 19,28 22,13 26,35 29,18 32,26 35,22 40,24" fill="none" stroke="#FF8A00" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`,
+  tips: `<path d="M10 5 H32 V42 l-3.7 -2.5 -3.7 2.5 -3.6 -2.5 -3.7 2.5 -3.6 -2.5 -3.7 2.5 Z" fill="#fff" stroke="#D1D6DB" stroke-width="2" stroke-linejoin="round"/>
+    <rect x="14" y="11" width="14" height="2.6" rx="1.3" fill="#B0B8C1"/><rect x="14" y="17" width="10" height="2.6" rx="1.3" fill="#B0B8C1"/><rect x="14" y="23" width="12" height="2.6" rx="1.3" fill="#B0B8C1"/>
+    <circle cx="34" cy="32" r="9.5" fill="#FFD43B" stroke="#F5A524" stroke-width="2"/>
+    <text x="34" y="36.5" text-anchor="middle" font-size="12" font-weight="700" font-family="sans-serif" fill="#B7791F">$</text>`,
+  mpg: `<path d="M8 28 L12 17 Q13.5 13 18 13 H30 Q34.5 13 36 17 L40 28 Z" fill="#3182F6"/>
+    <path d="M15 18 Q16 16 18 16 H23 V24 H13.5 Z M26 16 H30 Q32 16 33 18 L34.5 24 H26 Z" fill="#CDE3FF"/>
+    <rect x="5" y="25" width="38" height="11" rx="4" fill="#1B64DA"/>
+    <circle cx="14" cy="36" r="5" fill="#333D4B"/><circle cx="14" cy="36" r="2" fill="#D1D6DB"/>
+    <circle cx="34" cy="36" r="5" fill="#333D4B"/><circle cx="34" cy="36" r="2" fill="#D1D6DB"/>
+    <rect x="6" y="28" width="5" height="3" rx="1.5" fill="#FFD43B"/><rect x="37" y="28" width="5" height="3" rx="1.5" fill="#F04452"/>`,
+  flights: `<g transform="rotate(-35 24 24)">
+    <path d="M22 4 Q24 2 26 4 L27 20 L44 28 V32 L27 27 L26 38 L31 42 V45 L24 43 L17 45 V42 L22 38 L21 27 L4 32 V28 L21 20 Z" fill="#3182F6"/>
+    <path d="M23 6 Q24 5 25 6 L25.5 14 H22.5 Z" fill="#CDE3FF"/></g>`,
+
   // 상태
   done: `<circle cx="24" cy="25" r="16" fill="#00A661"/>
     <polyline points="16,25 22,31 33,19" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>

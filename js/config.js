@@ -5,6 +5,8 @@ const CONFIG = {
   CODAP_URL: 'https://codap3.concord.org/',
   LEAVE_WARN: 3, // 이탈 주의 기준 횟수
   AUTOSAVE_SEC: 30,
+  TITLE_SUFFIX: '', // 테스트 사이트는 ' (수행평가 테스트)'
+  KEY: 'pa', // 브라우저 저장 이름 (테스트 사이트는 'pa-test')
 };
 
 // 내 컴퓨터(localhost)에서 열면 실제 시트 대신 테스트 모드

@@ -1,6 +1,6 @@
 // 서버 호출. CONFIG.API_URL이 비어 있으면 브라우저 안 임시 저장소(테스트용) 사용
 const LocalStore = (() => {
-  const KEY = 'pa-local-db';
+  const KEY = CONFIG.KEY + '-local-db';
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { return null; } };
   let db = load() || { students: {}, answers: {}, logs: [], settings: {} };
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { console.warn('임시 저장 실패', e); } };
