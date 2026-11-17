@@ -214,3 +214,38 @@ textarea.input { height: 92px; padding: 12px 14px; font-size: 15px; line-height:
   .wrap { padding: 32px 16px 60px; }
   .panel { width: 340px; }
 }
+
+/* 내 수행평가, 데이터 선택도 같은 방식 (넓은 폭 + 세로 가운데 + 화면 크기에 따라 커짐) */
+#s-home .wrap, #s-data .wrap { max-width: 1280px; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding-top: clamp(20px, 4vh, 48px); padding-bottom: clamp(20px, 4vh, 48px); }
+#s-home h1, #s-data h1 { font-size: clamp(28px, 2.4vw, 38px); }
+#s-home .sub, #s-data .sub { font-size: clamp(16px, 1.2vw, 19px); margin-bottom: clamp(20px, 3vh, 40px); }
+#s-home .who, #s-data .topbar .link { font-size: clamp(14px, 1vw, 16px); }
+.slots { gap: clamp(16px, 1.4vw, 24px); margin-bottom: clamp(16px, 2.4vh, 28px); }
+.slot { padding: clamp(20px, 2.6vh, 32px) clamp(20px, 1.8vw, 32px); }
+.slot .title { font-size: clamp(20px, 1.6vw, 26px); }
+.slot .thumb { height: clamp(110px, 28vh, 340px); }
+.slot dl { font-size: clamp(14px, 1vw, 16px); }
+.slot .btn.md { height: clamp(48px, 5.5vh, 56px); font-size: clamp(15px, 1.05vw, 17px); }
+.submit-bar { padding: clamp(20px, 2.6vh, 30px) clamp(20px, 1.8vw, 32px); }
+#progress-text { font-size: clamp(18px, 1.4vw, 22px) !important; }
+.datasets { gap: clamp(16px, 1.4vw, 24px); }
+.ds { padding: clamp(20px, 2.8vh, 34px) clamp(20px, 1.8vw, 32px); }
+.ds .emoji { margin-bottom: clamp(10px, 1.6vh, 18px); }
+.ds .emoji .ico { width: clamp(44px, 3.6vw, 64px); height: clamp(44px, 3.6vw, 64px); }
+.ds .name { font-size: clamp(19px, 1.5vw, 24px); }
+.ds .desc { font-size: clamp(14px, 1vw, 16px); }
+.ds .attrs { font-size: clamp(12px, 0.85vw, 14px); }
+.ds .rows { font-size: clamp(13px, 0.9vw, 15px); }
+#s-data .source { font-size: clamp(13px, 0.9vw, 14px); }
+@media (max-height: 820px) {
+  #s-home h1, #s-data h1 { font-size: 28px; margin-bottom: 4px; }
+  #s-home .sub, #s-data .sub { margin-bottom: 16px; }
+  .slot .thumb { height: 100px; margin-bottom: 12px; }
+  .slot dl { margin-bottom: 14px; gap: 8px 12px; }
+  .ds { padding: 16px 20px; }
+  .ds .emoji { margin-bottom: 6px; }
+  .ds .emoji .ico { width: 40px; height: 40px; }
+  .ds .desc { min-height: 0; margin-bottom: 8px; }
+  .ds .rows { margin-top: 6px; }
+  #s-data .source { margin-top: 14px; }
+}
