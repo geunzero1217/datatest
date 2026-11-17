@@ -369,7 +369,7 @@ $('w-grab').onclick = async () => {
       const attr = await pickMapAttr();
       if (attr === null) return;
       g.image = await renderMapImage(Codap.table, attr);
-      Object.assign(g, { x: '경도(long)', y: '위도(lat)', plotType: attr ? `map (색 : ${attr})` : 'map' });
+      Object.assign(g, { x: 'long(경도)', y: 'lat(위도)', plotType: attr ? `map (색 : ${attr})` : 'map' });
     }
     if (!g.image) { toast('그래프 저장 실패, 그래프를 조금 움직인 뒤 다시 시도'); return; }
     S.work.img = await compressImage(g.image);

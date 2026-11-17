@@ -52,8 +52,8 @@ const Codap = {
   async loadData(ds) {
     const text = await (await fetch(`data/${ds.id}.csv`)).text();
     const rows = this.parseCSV(text);
-    // CODAP 지도는 속성 이름에 lat, long이 있어야 위치로 인식
-    const RENAME = { '위도': '위도(lat)', '경도': '경도(long)' };
+    // CODAP 지도는 속성 이름이 정확히 lat, long이어야 위치로 인식 (2026-11 확인 : '위도(lat)' 같은 이름은 더 이상 인식 안 됨)
+    const RENAME = { '위도': 'lat', '경도': 'long' };
     const head = rows[0].map(h => RENAME[h.trim()] || h.trim()), body = rows.slice(1);
     const isNum = head.map((_, j) => body.every(r => r[j] === '' || r[j] === undefined || !isNaN(Number(r[j]))));
     const name = ds.title;
@@ -138,7 +138,10 @@ async function renderMapImage(table, colorAttr) {
     cats = [...new Set(vals.map(String))].slice(0, 8);
     colorOf = v => PALETTE[Math.max(0, cats.indexOf(String(v)))] ;
   }
-  table.items.forEach(it => {
+  // 값이 큰 점을 나중에 그려서 위에 보이게 (같은 곳의 작은 값에 가려지지 않음)
+  const order = table.items.slice();
+  if (ci >= 0 && num) order.sort((a, b) => (Number(a[colorAttr]) || 0) - (Number(b[colorAttr]) || 0));
+  order.forEach(it => {
     const la = Number(it[latKey]), lo = Number(it[lonKey]);
     if (!isFinite(la) || !isFinite(lo)) return;
     g.beginPath(); g.arc(projX(lo), merc(la) - top, 7, 0, Math.PI * 2);
