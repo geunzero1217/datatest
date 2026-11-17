@@ -38,12 +38,39 @@ function infoOf(s) {
   const leave = Number(s.leaveCount || 0);
   const main = !s.firstAt ? '미접속' : s.submittedAt ? '제출' : '작성 중';
   const flags = [];
+  if (s.reqStatus === '대기') flags.push('수정 요청');
   if (dup) flags.push('그래프 중복');
   if (leave >= CONFIG.LEAVE_WARN) flags.push('이탈 주의');
   return { ans, types, dup, progress, leave, main, flags };
 }
 const MAIN_COLOR = { '미접속': 'gray', '작성 중': 'blue', '제출': 'green' };
-const FLAG_COLOR = { '그래프 중복': 'orange', '이탈 주의': 'red' };
+const FLAG_COLOR = { '수정 요청': 'purple', '그래프 중복': 'orange', '이탈 주의': 'red' };
+
+/* ---------- 수정 요청 ---------- */
+function renderRequests() {
+  const reqs = A.students.filter(s => s.reqStatus === '대기').sort((a, b) => String(a.reqAt).localeCompare(String(b.reqAt)));
+  $('a-requests').innerHTML = reqs.length ? `<div class="card req-panel">
+    <div class="req-title">수정 요청 ${reqs.length}건 <span class="muted">승인하면 제출이 취소되고 학생이 다시 작성 가능</span></div>
+    ${reqs.map(s => `<div class="req-row" data-id="${esc(s.id)}">
+      <div class="who"><b>${esc(s.id)} ${esc(s.name)}</b><span class="muted">${esc(s.reqAt)}</span></div>
+      <div class="why">${esc(s.reqReason)}</div>
+      <div class="acts"><button class="mini" data-act="view">답안 보기</button><button class="mini" data-act="reject">거절</button><button class="mini ok" data-act="accept">승인</button></div>
+    </div>`).join('')}</div>` : '';
+  $('a-requests').querySelectorAll('.req-row button').forEach(b => b.onclick = () => {
+    const id = b.closest('.req-row').dataset.id;
+    if (b.dataset.act === 'view') openDetail(id); else resolveRequest(id, b.dataset.act === 'accept');
+  });
+}
+async function resolveRequest(id, accept) {
+  const s = A.students.find(x => x.id === id);
+  if (!(await confirmBox(accept ? '수정 요청 승인' : '수정 요청 거절',
+    `${s.id} ${s.name}. ` + (accept ? '제출이 취소되고 학생이 다시 작성, 제출 가능 (평가가 열려 있어야 작성 가능)' : '학생 화면에 거절됨으로 표시, 학생은 다시 요청 가능'), accept ? '승인' : '거절'))) return false;
+  const r = await call('adminResolveRequest', { id, accept });
+  if (!r.ok) { toast(r.error); await load(true); return false; }
+  toast(accept ? '승인 완료' : '거절 완료');
+  await load(true);
+  return true;
+}
 const badgesHTML = inf => `<div class="badges"><span class="badge ${MAIN_COLOR[inf.main]}">${inf.main}</span>${inf.flags.map(f => `<span class="badge ${FLAG_COLOR[f]}">${f}</span>`).join('')}</div>`;
 
 /* ---------- 로그인 ---------- */
@@ -82,14 +109,18 @@ $('a-class').onchange = () => { A.cls = $('a-class').value; render(); };
 const visible = () => A.students.filter(s => !A.cls || classOf(String(s.id)) === A.cls);
 
 function render() {
-  $('a-lock').textContent = A.locked ? '잠금 해제' : '평가 잠금';
+  // 평가 열기 / 닫기 상태
+  $('a-open-state').className = 'open-state ' + (A.locked ? 'closed' : 'open');
+  $('a-open-state').textContent = A.locked ? '평가 닫힘' : '평가 열림';
+  $('a-lock').textContent = A.locked ? '평가 열기' : '평가 닫기';
   $('a-lock').className = 'btn sm ' + (A.locked ? '' : 'red');
-  $('a-lock-notice').innerHTML = A.locked ? '<div class="notice red">🔒 평가 잠김 상태, 학생 저장과 제출 불가</div>' : '';
+  $('a-lock-notice').innerHTML = A.locked ? '<div class="notice red">🔒 평가 닫힘 : 학생이 로그인해도 작성, 저장, 제출 불가 (제출한 학생의 수정 요청은 가능)</div>' : '';
+  renderRequests();
   const list = visible(), infos = list.map(infoOf);
   const cnt = f => infos.filter(f).length;
   $('a-stats').innerHTML = [
     ['전체', list.length, ''], ['미접속', cnt(i => i.main === '미접속'), ''], ['작성 중', cnt(i => i.main === '작성 중'), ''],
-    ['제출', cnt(i => i.main === '제출'), 'green'], ['그래프 중복', cnt(i => i.dup), 'orange'], ['이탈 주의', cnt(i => i.flags.includes('이탈 주의')), 'red'],
+    ['제출', cnt(i => i.main === '제출'), 'green'], ['수정 요청', cnt(i => i.flags.includes('수정 요청')), 'purple'], ['그래프 중복', cnt(i => i.dup), 'orange'], ['이탈 주의', cnt(i => i.flags.includes('이탈 주의')), 'red'],
   ].map(([k, v, c]) => `<div class="stat ${c}"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
   $('a-empty').hidden = list.length > 0;
   $('a-rows').innerHTML = list.map((s, i) => {
@@ -158,13 +189,20 @@ async function openDetail(id) {
   const s0 = A.students.find(x => x.id === id);
   $('d-title').textContent = `${s0.id} ${s0.name}`;
   $('d-badges').innerHTML = badgesHTML(infoOf(s0));
-  $('d-answers').innerHTML = '<div class="muted">불러오는 중</div>';
+  $('d-answers').innerHTML = '<div class="muted">불러오는 중</div>'; $('d-req').innerHTML = '';
   $('d-logs').innerHTML = ''; $('d-log-count').textContent = '';
   $('d-unsubmit').hidden = !s0.submittedAt;
   $('ov-detail').classList.add('on');
   const r = await call('adminDetail', { id });
   if (!r.ok) { $('d-answers').textContent = r.error; return; }
   const s = r.student;
+  $('d-req').innerHTML = s.reqStatus === '대기' ? `<div class="req-panel inline">
+    <div class="req-title">수정 요청 <span class="muted">${esc(s.reqAt)}</span></div><div class="why">${esc(s.reqReason)}</div>
+    <div class="acts"><button class="mini" id="d-req-reject">거절</button><button class="mini ok" id="d-req-accept">승인</button></div></div>` : '';
+  if (s.reqStatus === '대기') {
+    $('d-req-accept').onclick = async () => { if (await resolveRequest(s.id, true)) $('ov-detail').classList.remove('on'); };
+    $('d-req-reject').onclick = async () => { if (await resolveRequest(s.id, false)) $('ov-detail').classList.remove('on'); };
+  }
   $('d-answers').innerHTML = [1, 2, 3].map(n => {
     const a = r.answers.find(x => Number(x.slot) === n) || {};
     return `<div class="ans">
@@ -199,7 +237,9 @@ $('ov-detail').onclick = e => { if (e.target.id === 'ov-detail') $('ov-detail').
 $('a-refresh').onclick = () => load();
 $('a-lock').onclick = async () => {
   const to = !A.locked;
-  if (!(await confirmBox(to ? '평가 잠금' : '잠금 해제', to ? '잠그면 학생 저장, 제출 불가' : '학생 저장, 제출 다시 가능', to ? '잠금' : '해제'))) return;
+  if (!(await confirmBox(to ? '평가 닫기' : '평가 열기',
+    to ? '닫으면 학생이 로그인해도 작성, 저장, 제출 불가. 작성 중인 학생은 다음 저장 때 닫힘 화면으로 바뀜 (그 전 저장분은 유지)'
+       : '열면 학생이 로그인해서 작성, 저장, 제출 가능', to ? '닫기' : '열기'))) return;
   const r = await call('adminSetLock', { locked: to });
   if (!r.ok) return toast(r.error);
   A.locked = r.locked; render();

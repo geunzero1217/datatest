@@ -15,7 +15,8 @@ function makeServer(store, defaultAdminPw) {
   const LEAVE_KINDS = ['탭 이동', '창 이동'];
   const TEXT_KEYS = ['q', 'obs', 'ev', 'concl'];
   const err = msg => ({ ok: false, error: msg });
-  const isLocked = () => String(store.getSetting('locked')) === 'true';
+  // 평가 열림은 교사가 '평가 열기'를 눌렀을 때만 (설정이 없으면 닫힘 = 집에서 미리 못 함)
+  const isLocked = () => String(store.getSetting('locked')) !== 'false';
   const adminPw = () => store.getSetting('adminPassword') || defaultAdminPw;
 
   function state(s) {
@@ -26,8 +27,10 @@ function makeServer(store, defaultAdminPw) {
       submittedAt: s.submittedAt || '',
       leaveCount: Number(s.leaveCount || 0),
       locked: isLocked(),
+      request: { status: s.reqStatus || '', reason: s.reqReason || '', at: s.reqAt || '' },
     };
   }
+  const logOne = (id, kind, detail) => store.addLogs([{ time: store.now(), id, kind, detail: String(detail || '').slice(0, 200) }]);
   function auth(req) {
     const s = store.getStudent(String(req.id || ''));
     return checkPw(s, req.pw) ? s : null;
@@ -56,7 +59,7 @@ function makeServer(store, defaultAdminPw) {
     },
     save(req) {
       const s = auth(req); if (!s) return err('로그인 정보 오류, 다시 로그인 필요');
-      if (isLocked()) return err('평가가 잠겨 저장 불가');
+      if (isLocked()) return err('평가가 닫혀 저장 불가');
       if (s.submittedAt) return err('제출 후 수정 불가');
       const slot = Number(req.slot);
       if (![1, 2, 3].includes(slot)) return err('잘못된 번호');
@@ -71,12 +74,25 @@ function makeServer(store, defaultAdminPw) {
     },
     submit(req) {
       const s = auth(req); if (!s) return err('로그인 정보 오류, 다시 로그인 필요');
-      if (isLocked()) return err('평가가 잠겨 제출 불가');
+      if (isLocked()) return err('평가가 닫혀 제출 불가');
       if (s.submittedAt) return { ok: true, submittedAt: s.submittedAt };
       // 미완성이어도 제출 가능 (완성 개수는 관리 화면에서 확인)
       s.submittedAt = store.now();
+      s.reqStatus = ''; s.reqReason = ''; s.reqAt = ''; // 다시 제출하면 다음 수정 요청 가능
       store.putStudent(s);
       return { ok: true, submittedAt: s.submittedAt };
+    },
+    // 제출한 학생만 수정 요청 (교사가 승인하면 다시 작성 가능)
+    requestEdit(req) {
+      const s = auth(req); if (!s) return err('로그인 정보 오류, 다시 로그인 필요');
+      if (!s.submittedAt) return err('제출한 경우만 수정 요청 가능');
+      if (s.reqStatus === '대기') return { ok: true, request: { status: s.reqStatus, reason: s.reqReason, at: s.reqAt } };
+      const reason = String(req.reason || '').trim().slice(0, 300);
+      if (!reason) return err('수정하려는 이유 입력 필요');
+      s.reqStatus = '대기'; s.reqReason = reason; s.reqAt = store.now();
+      store.putStudent(s);
+      logOne(s.id, '수정 요청', reason);
+      return { ok: true, request: { status: s.reqStatus, reason: s.reqReason, at: s.reqAt } };
     },
     log(req) {
       const s = auth(req); if (!s) return err('로그인 정보 오류');
@@ -111,7 +127,18 @@ function makeServer(store, defaultAdminPw) {
     adminUnsubmit(req) {
       if (!checkAdmin(req)) return err('관리자 인증 필요');
       const s = store.getStudent(String(req.id)); if (!s) return err('학생 없음');
-      s.submittedAt = ''; store.putStudent(s); return { ok: true };
+      s.submittedAt = ''; s.reqStatus = ''; store.putStudent(s); logOne(s.id, '제출 취소', '교사'); return { ok: true };
+    },
+    // 수정 요청 승인(제출 취소, 다시 작성 가능) 또는 거절
+    adminResolveRequest(req) {
+      if (!checkAdmin(req)) return err('관리자 인증 필요');
+      const s = store.getStudent(String(req.id)); if (!s) return err('학생 없음');
+      if (s.reqStatus !== '대기') return err('대기 중인 수정 요청 없음');
+      if (req.accept) { s.submittedAt = ''; s.reqStatus = '승인'; }
+      else s.reqStatus = '거절';
+      store.putStudent(s);
+      logOne(s.id, req.accept ? '수정 요청 승인' : '수정 요청 거절', s.reqReason);
+      return { ok: true, status: s.reqStatus };
     },
     adminSetLock(req) {
       if (!checkAdmin(req)) return err('관리자 인증 필요');
@@ -136,7 +163,7 @@ function makeServer(store, defaultAdminPw) {
     },
   };
   return {
-    WRITE_ACTIONS: ['login', 'save', 'submit', 'log', 'adminResetPw', 'adminUnsubmit', 'adminSetLock', 'adminAddStudents', 'adminDeleteStudents'],
+    WRITE_ACTIONS: ['login', 'save', 'submit', 'log', 'adminResetPw', 'adminUnsubmit', 'adminSetLock', 'adminAddStudents', 'adminDeleteStudents', 'requestEdit', 'adminResolveRequest'],
     handle(req) {
       const fn = H[req && req.action];
       if (!fn) return err('알 수 없는 요청');

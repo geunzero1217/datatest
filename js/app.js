@@ -114,6 +114,7 @@ function applyState(r) {
   (r.answers || []).forEach(a => { S.answers[Number(a.slot)] = a; });
   S.submittedAt = r.submittedAt || '';
   S.locked = !!r.locked;
+  S.request = r.request || { status: '' };
   Guard.leaveCount = Number(r.leaveCount || 0);
 }
 function afterLogin(r, reloaded) {
@@ -197,7 +198,40 @@ $('submit-btn').onclick = async () => {
 function showDone() {
   Guard.stop();
   $('done-sub').textContent = `${S.id} ${S.name}, 제출 시간 ${S.submittedAt}`;
+  renderRequest();
   show('s-done');
+}
+
+/* ---------- 수정 요청 (제출한 학생만) ---------- */
+function renderRequest() {
+  const q = S.request || { status: '' };
+  if (q.status === '대기') {
+    $('done-req').innerHTML = `<div class="req-card"><b>수정 요청 보냄</b> (${esc(q.at)})<br>선생님 확인 기다리는 중<br>사유 : ${esc(q.reason)}</div>
+      <button class="btn full soft md" id="req-check">승인됐는지 확인</button>`;
+    $('req-check').onclick = checkRequest;
+    return;
+  }
+  $('done-req').innerHTML = `${q.status === '거절' ? `<div class="req-card"><b>지난 수정 요청 거절됨</b><br>사유 : ${esc(q.reason)}</div>` : ''}
+    <textarea class="input" id="req-reason" maxlength="300" placeholder="수정이 필요하면 이유 입력 (예: 시각화 2 해석을 다시 쓰고 싶음)"></textarea>
+    <button class="btn full md" id="req-send">선생님께 수정 요청</button>`;
+  $('req-send').onclick = async () => {
+    const reason = $('req-reason').value.trim();
+    if (!reason) return toast('수정하려는 이유 입력 필요');
+    $('req-send').disabled = true;
+    const r = await API.call('requestEdit', { id: S.id, pw: S.pw, reason });
+    $('req-send').disabled = false;
+    if (!r.ok) return toast(r.error);
+    S.request = r.request; renderRequest(); toast('수정 요청 보냄');
+  };
+}
+async function checkRequest() {
+  $('req-check').disabled = true;
+  const r = await API.call('login', { id: S.id, name: S.name, pw: S.pw });
+  if ($('req-check')) $('req-check').disabled = false;
+  if (!r.ok) return toast(r.error);
+  if (!r.submittedAt) { toast('수정 요청 승인됨, 다시 작성 가능'); afterLogin(r); return; }
+  applyState(r); renderRequest();
+  toast(S.request.status === '거절' ? '수정 요청 거절됨' : '아직 확인 전');
 }
 function logout() {
   Guard.stop(); stopAutosave(); Codap.close();
@@ -209,7 +243,7 @@ $('done-logout').onclick = logout;
 $('locked-logout').onclick = logout;
 
 function handleError(r) {
-  if (/잠겨/.test(r.error || '')) { S.locked = true; Guard.stop(); show('s-locked'); return; }
+  if (/닫혀|잠겨/.test(r.error || '')) { S.locked = true; Guard.stop(); show('s-locked'); return; }
   if (/제출 후/.test(r.error || '')) { location.reload(); return; }
   toast(r.error || '오류 발생');
 }
@@ -392,7 +426,7 @@ async function doSave(silent) {
   if (!r.ok) {
     S.dirty = true; S.imgChanged = S.imgChanged || wasImgChanged;
     setSaveState('저장 실패');
-    if (!silent || /잠겨|제출 후/.test(r.error)) handleError(r);
+    if (!silent || /닫혀|잠겨|제출 후/.test(r.error)) handleError(r);
     return false;
   }
   w.updatedAt = r.updatedAt;

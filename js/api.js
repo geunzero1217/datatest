@@ -56,7 +56,7 @@ const LocalServer = makeServer(LocalStore, '1234');
 
 // 구글 서버가 가끔 응답 없이 멈추는 경우가 있어서(측정 시 약 15%), 일정 시간 뒤 끊고 다시 보냄
 // 다시 보내도 결과가 같은 요청만 재시도 (임시 비밀번호 초기화는 매번 새 번호라 제외)
-const RETRY_SAFE = ['login', 'save', 'submit', 'log', 'adminLogin', 'adminList', 'adminDetail', 'adminSetLock', 'adminUnsubmit', 'adminAddStudents', 'adminDeleteStudents'];
+const RETRY_SAFE = ['login', 'save', 'submit', 'log', 'requestEdit', 'adminLogin', 'adminList', 'adminDetail', 'adminSetLock', 'adminUnsubmit', 'adminAddStudents', 'adminDeleteStudents'];
 const TIMEOUTS = [12000, 20000, 30000];
 
 const API = {
