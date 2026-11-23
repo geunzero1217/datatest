@@ -84,19 +84,19 @@ function pepper() {
 }
 
 // Claude API로 생기부 문장 만들기 (키는 스크립트 속성에만 둠)
-const AI_MODEL = 'claude-opus-5-5';
+// 짧은 문단 정리라 가성비 모델 사용 (문장이 밋밋하면 'claude-sonnet-5-5'로 올리기)
+const AI_MODEL = 'claude-haiku-5-5';
 function callClaude(system, user) {
   const key = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
   if (!key) return { ok: false, noKey: true, error: 'AI 키가 설정되지 않음, 프롬프트 복사로 진행' };
   const res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
     method: 'post',
     contentType: 'application/json',
-    headers: { 'x-api-key': key, 'anthropic-version': '2026-10-21', 'anthropic-beta': 'server-side-fallback-2026-07-01' },
+    headers: { 'x-api-key': key, 'anthropic-version': '2026-10-21' },
     payload: JSON.stringify({
       model: AI_MODEL,
       max_tokens: 8000,
-      output_config: { effort: 'medium' },
-      fallbacks: 'default',
+      output_config: { effort: 'low' },
       system,
       messages: [{ role: 'user', content: user }],
     }),

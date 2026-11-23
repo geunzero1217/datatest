@@ -180,7 +180,7 @@ clasp create-deployment -i AKfycbzrwW11Tc83_DS5jnBq8nWQlakx3-XuobeWwMs-6YkMS3frx
 - 관리 : `ai-charter/admin.html` (반별 목록, 답안 보기, 생기부 문장 만들기와 저장, 선택 일괄 생성, 우수 표시, CSV, 삭제, 명단 추가, 열기/닫기, 학생 주소 QR, 생기부 기본 요청 공유)
 - 활동 칸 정의 : `ai-charter/js/activity.js` (학생 화면, 관리 화면, 서버, 시트 칸 제목이 모두 여기서 나옴)
 - 서버 : `node tools/build-charter-server.js` → `apps-script/ai-charter/Code.gs` (activity.js + sheets-store.js + core.js). 시트 탭 `학생`, `답안`, `생기부`, `설정`
-- 생기부 AI 생성 : Apps Script 스크립트 속성 `ANTHROPIC_API_KEY`가 있으면 Claude(`claude-opus-5-5`)로 생성, 없으면 "프롬프트 복사" 방식. 프롬프트에 학생 이름, 학번 안 들어감
+- 생기부 AI 생성 : Apps Script 스크립트 속성 `ANTHROPIC_API_KEY`가 있으면 Claude(`claude-haiku-5-5`, effort low)로 생성, 없으면 "프롬프트 복사" 방식. 프롬프트에 학생 이름, 학번 안 들어감
 - 구글 시트 "AI 사용 윤리 헌장 만들기" `155dNRdWUr-l0QZz2vbyEnKTRjP-ubZVYaX3khX3NSx0` (개인 계정)
 - Apps Script ID `1lSB6nvBIJpNv2mx2f6_ymOtgTS1oReNH2WAaV6VA2VWGXIhbltGA-1Wl`, clasp 폴더 `apps-script/ai-charter/clasp/`
 - 웹 앱 배포 ID (주소 고정) `AKfycbwSHkd-e-E_pgdVc8F8eCPWaIem-qlEniUdEtPOGPo69FMHnNieO9uXequIFzXaJiQzhw`
