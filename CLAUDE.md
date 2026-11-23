@@ -175,7 +175,7 @@ clasp create-deployment -i AKfycbzrwW11Tc83_DS5jnBq8nWQlakx3-XuobeWwMs-6YkMS3frx
 
 ## 11. AI 사용 윤리 헌장 만들기 : 별도 저장소로 분리 (2026-11-23)
 
-- 수행평가와 겹치지 않게 저장소 `geunzero1217/ai-charter`, 로컬 폴더 `바탕 화면AI 윤리 헌장`으로 옮김. 그 폴더의 `CLAUDE.md` 참고
+- 수행평가와 겹치지 않게 저장소 `geunzero1217/ai-charter`, 로컬 폴더 바탕 화면의 `AI 윤리 헌장` 폴더으로 옮김. 그 폴더의 `CLAUDE.md` 참고
 - 새 주소 : https://geunzero1217.github.io/ai-charter/ (관리 `admin.html`)
 - 이 저장소의 `ai-charter/index.html`, `admin.html`은 예전 링크를 새 주소로 넘기는 페이지만 남김 (지우지 말 것)
 
