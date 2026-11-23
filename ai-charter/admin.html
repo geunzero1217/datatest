@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 윤리 헌장 관리</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/spoqa/spoqa-han-sans@3.3.0/css/SpoqaHanSansNeo.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<section class="screen on" id="s-login">
+  <div class="center">
+    <div class="card login-card">
+      <div class="logo" data-icon="teacher" data-size="56"></div>
+      <h1>AI 윤리 헌장 관리</h1>
+      <p class="sub">교사용 화면, 학생에게 공유 X</p>
+      <div class="field"><label for="a-pw">관리자 비밀번호</label><input class="input" id="a-pw" type="password" autocomplete="off"></div>
+      <div class="error" id="a-err"></div>
+      <button class="btn full" id="a-go">들어가기</button>
+      <p class="hint" id="a-local" hidden>테스트 모드 (이 브라우저에만 저장), 비밀번호 1234</p>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="s-admin">
+  <header class="topbar"><div class="topbar-in">
+    <div class="brand"><i data-icon="teacher" data-size="30"></i><span>AI 윤리 헌장 관리</span></div>
+    <span class="badge purple" id="test-badge" hidden>테스트 모드</span>
+    <div class="spacer"></div>
+    <button class="btn sm gray" id="qr-btn"><i data-icon="qr" data-size="18"></i>학생 주소 QR</button>
+    <button class="btn sm" id="lock-btn"></button>
+    <button class="btn sm gray" id="reload-btn">새로 고침</button>
+    <button class="btn sm gray" id="out-btn">나가기</button>
+  </div></header>
+
+  <div class="wrap-admin">
+    <div class="stats" id="stats"></div>
+
+    <div class="card toolbar">
+      <select class="input sel" id="f-class" aria-label="반"></select>
+      <select class="input sel" id="f-status" aria-label="상태">
+        <option value="">전체 상태</option><option value="제출">제출</option><option value="작성 중">작성 중</option><option value="미작성">미작성</option>
+        <option value="생기부 있음">생기부 있음</option><option value="생기부 없음">제출, 생기부 없음</option><option value="우수">우수 표시</option>
+      </select>
+      <input class="input sel" id="f-q" placeholder="학번, 이름, 내용 검색">
+      <div class="spacer"></div>
+      <span class="muted" id="sel-n"></span>
+      <button class="btn md purple" id="bulk-gen"><i data-icon="sparkle" data-size="18"></i>선택 생기부 만들기</button>
+      <button class="btn md soft" id="csv-btn">선택 CSV</button>
+      <button class="btn md gray" id="del-btn">선택 삭제</button>
+    </div>
+
+    <div class="card table-card">
+      <table class="list">
+        <thead><tr>
+          <th class="ck"><input type="checkbox" id="ck-all" aria-label="모두 선택"></th>
+          <th>학번</th><th>이름</th><th>방식</th><th>작성</th><th>상태</th><th>마지막 저장</th><th>헌장 조항</th><th>생기부</th><th>우수</th><th></th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p class="empty muted" id="empty" hidden>학생 없음 (학생이 처음 로그인하거나 명단을 추가하면 나타남)</p>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>생기부 기본 요청 사항</h2>
+        <p class="muted" style="margin:6px 0 12px">두 선생님이 같이 쓰는 기본 요청, 생기부 만들 때 요청 칸에 자동으로 들어감</p>
+        <textarea class="ta" id="guide" rows="4" placeholder="예) 학생이 제안한 조항과 이유를 중심으로, 비판적 사고와 공정성 의식이 드러나게"></textarea>
+        <div class="row-end"><span class="muted" id="guide-state"></span><button class="btn md" id="guide-save">저장</button></div>
+      </div>
+      <div class="card">
+        <h2>명단 추가 (선택)</h2>
+        <p class="muted" style="margin:6px 0 12px">한 줄에 "학번 이름", 엑셀에서 두 칸 복사해 붙여넣기 가능. 명단에 있으면 이름이 맞아야 로그인</p>
+        <textarea class="ta" id="roster" rows="4" placeholder="10301 김가람&#10;10302 이누리"></textarea>
+        <div class="row-end"><span class="muted" id="roster-state"></span><button class="btn md" id="roster-add">추가</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/activity.js"></script>
+<script src="js/core.js"></script>
+<script src="js/api.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

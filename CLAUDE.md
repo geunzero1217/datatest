@@ -173,6 +173,20 @@ clasp create-deployment -i AKfycbzrwW11Tc83_DS5jnBq8nWQlakx3-XuobeWwMs-6YkMS3frx
 5. **수업 자료 도구를 쓸 때만** : `cd tools/lesson` → `npm install`
 6. 확인 : `node test/server.js` 실행 후 http://localhost:8080 이 열리면 준비 끝
 
+## 11. AI 사용 윤리 헌장 만들기 (`ai-charter/`, 2026-11-23 시작)
+
+학교 자체 활동 (수행평가 아님). 1, 2학년 희망자, 진로부장 계획서 기준. 개별 활동 또는 모둠 활동 선택 → 기사와 나의 질문, 헌장 조항과 이유, 한 줄 소감
+- 학생 : `ai-charter/index.html` (학번 5자리, 이름, 숫자 4자리 비밀번호, 3초 자동 저장, 다시 로그인하면 불러오기, 제출 후에도 열려 있으면 고쳐서 다시 제출)
+- 관리 : `ai-charter/admin.html` (반별 목록, 답안 보기, 생기부 문장 만들기와 저장, 선택 일괄 생성, 우수 표시, CSV, 삭제, 명단 추가, 열기/닫기, 학생 주소 QR, 생기부 기본 요청 공유)
+- 활동 칸 정의 : `ai-charter/js/activity.js` (학생 화면, 관리 화면, 서버, 시트 칸 제목이 모두 여기서 나옴)
+- 서버 : `node tools/build-charter-server.js` → `apps-script/ai-charter/Code.gs` (activity.js + sheets-store.js + core.js). 시트 탭 `학생`, `답안`, `생기부`, `설정`
+- 생기부 AI 생성 : Apps Script 스크립트 속성 `ANTHROPIC_API_KEY`가 있으면 Claude(`claude-opus-5-5`)로 생성, 없으면 "프롬프트 복사" 방식. 프롬프트에 학생 이름, 학번 안 들어감
+- 구글 시트 "AI 사용 윤리 헌장 만들기" `155dNRdWUr-l0QZz2vbyEnKTRjP-ubZVYaX3khX3NSx0` (개인 계정)
+- Apps Script ID `1lSB6nvBIJpNv2mx2f6_ymOtgTS1oReNH2WAaV6VA2VWGXIhbltGA-1Wl`, clasp 폴더 `apps-script/ai-charter/clasp/`
+- 웹 앱 배포 ID (주소 고정) `AKfycbwSHkd-e-E_pgdVc8F8eCPWaIem-qlEniUdEtPOGPo69FMHnNieO9uXequIFzXaJiQzhw`
+- 서버 고칠 때 : `node tools/build-charter-server.js` → `cd apps-script/ai-charter/clasp` → `clasp push --force` → `clasp create-deployment -i 위배포ID --description "변경 내용"`
+- 주소 : 학생 https://geunzero1217.github.io/datatest/ai-charter/ , 관리 `ai-charter/admin.html`
+
 ## 10. 이 폴더를 새 PC로 옮기는 방법
 
 **이 폴더 전체가 GitHub 저장소 `geunzero1217/datatest`에 올라가 있음** (2026-11-17, 방법 A 선택). 새 PC에서는 아래만 하면 됨.

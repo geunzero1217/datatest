@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 사용 윤리 헌장 만들기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/spoqa/spoqa-han-sans@3.3.0/css/SpoqaHanSansNeo.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- 로그인 -->
+<section class="screen on" id="s-login">
+  <div class="center">
+    <div class="card login-card">
+      <div class="logo" data-icon="charter" data-size="56"></div>
+      <h1>AI 사용 윤리 헌장 만들기</h1>
+      <p class="sub">학번, 이름, 비밀번호로 시작<br>저장한 내용은 다시 들어오면 그대로 불러옴</p>
+      <div class="field"><label for="l-id">학번 (숫자 5자리)</label><input class="input" id="l-id" inputmode="numeric" maxlength="5" placeholder="예) 10312" autocomplete="off"></div>
+      <div class="field"><label for="l-name">이름</label><input class="input" id="l-name" placeholder="예) 홍길동" autocomplete="off"></div>
+      <div class="field"><label for="l-pw">비밀번호 (숫자 4자리)</label><input class="input" id="l-pw" type="password" inputmode="numeric" maxlength="4" autocomplete="off">
+        <div class="hint">처음이면 지금 정할 비밀번호 입력, 다음부터 같은 번호로 불러오기</div></div>
+      <div class="error" id="l-err"></div>
+      <button class="btn full" id="l-go">시작하기</button>
+    </div>
+  </div>
+</section>
+
+<!-- 비밀번호 처음 정하기 -->
+<section class="screen" id="s-setup">
+  <div class="center">
+    <div class="card login-card">
+      <div class="logo" data-icon="lock" data-size="56"></div>
+      <h1>비밀번호 정하기</h1>
+      <p class="sub">처음 접속, 방금 입력한 비밀번호 한 번 더 입력<br>잊으면 선생님께 초기화 요청</p>
+      <div class="field"><label for="p-pw2">비밀번호 확인 (숫자 4자리)</label><input class="input" id="p-pw2" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+      <div class="error" id="p-err"></div>
+      <button class="btn full" id="p-go">비밀번호 정하고 시작</button>
+      <div style="text-align:center;margin-top:12px"><button class="link" id="p-back">처음으로</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- 활동지 -->
+<section class="screen" id="s-work">
+  <header class="topbar"><div class="topbar-in">
+    <div class="brand"><i data-icon="charter" data-size="30"></i><span>AI 사용 윤리 헌장 만들기</span></div>
+    <div class="spacer"></div>
+    <div class="save-state" id="save-state"></div>
+    <div class="who" id="who"></div>
+    <button class="btn sm gray" id="logout">나가기</button>
+  </div></header>
+  <div class="layout">
+    <nav class="side" id="side"></nav>
+    <main class="main" id="main"></main>
+  </div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="js/config.js"></script>
+<script src="js/activity.js"></script>
+<script src="js/core.js"></script>
+<script src="js/api.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
