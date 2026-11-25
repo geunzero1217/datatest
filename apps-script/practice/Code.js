@@ -212,7 +212,8 @@ function makeServer(store, defaultAdminPw) {
     const s = store.getStudent(String(req.id || ''));
     return checkPw(s, req.pw) ? s : null;
   }
-  function checkAdmin(req) { const p = String(adminPw() || ''); return p !== '' && String(req.adminPw || '') === p; }
+  // 시트 칸에 앞뒤 공백이 들어가도 맞게 비교
+  function checkAdmin(req) { const p = String(adminPw() || '').trim(); return p !== '' && String(req.adminPw || '').trim() === p; }
 
   const H = {
     login(req) {
@@ -239,7 +240,8 @@ function makeServer(store, defaultAdminPw) {
       if (isLocked()) return err('평가가 닫혀 저장 불가');
       if (s.submittedAt) return err('제출 후 수정 불가');
       const slot = Number(req.slot);
-      if (![1, 2, 3].includes(slot)) return err('잘못된 번호');
+      // 본 평가 화면은 1~3만 씀, 연습 사이트는 최대 8개
+      if (!(Number.isInteger(slot) && slot >= 1 && slot <= 8)) return err('잘못된 번호');
       const a = req.answer || {};
       const old = store.getAnswers(s.id).find(x => Number(x.slot) === slot) || {};
       const row = { id: s.id, slot, data: a.data || '', type: a.type || '', x: a.x || '', y: a.y || '', plotType: a.plotType || '',

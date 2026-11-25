@@ -45,7 +45,7 @@
 | `js/icons.js` | 직접 그린 SVG 아이콘 |
 | `data/*.csv` | 본 평가 데이터 6개 (한글 속성명, 영문 파일명) |
 | `1_남극펭귄.csv` 등 | 원본 CSV (사이트에는 안 씀) |
-| `practice/` | **테스트(연습) 사이트**. `index.html`, `admin.html`은 자동 생성(직접 고치지 말 것), `config.js`로 서버 주소와 데이터만 바꿈 |
+| `practice/` | **테스트(연습) 사이트**. `index.html`, `admin.html`은 자동 생성(직접 고치지 말 것), `config.js`로 서버 주소, 데이터, 시각화 개수(`MAX_SLOTS = 8`, `FREE_SLOTS = true` : 학생이 "시각화 추가"로 최대 8개, 종류 중복 경고 없음)만 바꿈 |
 | `practice/data/*.csv` | 연습 데이터 6개 (붓꽃, 의료비와 기대수명, 2023년 큰 지진, 식당 팁, 자동차 연비, 항공 승객) |
 | `apps-script/sheets-store.js` | 구글 시트 저장소 코드 (서버의 앞부분) |
 | `apps-script/Code.gs` | 자동 생성 : `sheets-store.js` + `js/core.js` |

@@ -6,9 +6,12 @@ const TEXT_KEYS = TEXT_FIELDS.map(f => f.key);
 const DONE_MARK = `${icon('check', 16)} 완료`;
 fillIcons();
 
+// 본 평가는 시각화 3개 고정, 연습 사이트(FREE_SLOTS)는 학생이 최대 MAX_SLOTS개까지 추가
+const FREE = !!CONFIG.FREE_SLOTS, MAX_SLOTS = FREE ? (CONFIG.MAX_SLOTS || 8) : 3;
+const emptyAnswers = () => { const o = {}; for (let n = 1; n <= MAX_SLOTS; n++) o[n] = {}; return o; };
 const S = {
   id: '', name: '', pw: '',
-  answers: { 1: {}, 2: {}, 3: {} },
+  answers: emptyAnswers(),
   submittedAt: '', locked: false,
   slot: null, work: null, dirty: false, imgChanged: false, changingData: false,
   logQueue: [], sending: false, autosaveTimer: null, screen: '',
@@ -37,8 +40,16 @@ function confirmBox(title, text, yes = '확인', no = '취소') {
 }
 const isComplete = a => !!(a && a.data && a.type && a.img && TEXT_KEYS.every(k => String(a[k] || '').trim()));
 const textCount = a => TEXT_KEYS.filter(k => String((a || {})[k] || '').trim()).length;
+// 화면에 보이는 시각화 번호 (연습 사이트는 시작한 마지막 번호까지)
+function slotNums() {
+  if (!FREE) return [1, 2, 3];
+  let last = 1;
+  for (let n = 1; n <= MAX_SLOTS; n++) if (S.answers[n] && S.answers[n].data) last = n;
+  return Array.from({ length: last }, (_, i) => i + 1);
+}
 function usedTypes(exceptSlot) {
   const m = {};
+  if (FREE) return m; // 연습 사이트는 같은 종류 여러 번 가능
   [1, 2, 3].forEach(n => { if (n !== exceptSlot && S.answers[n].type) (m[S.answers[n].type] = m[S.answers[n].type] || []).push(n); });
   return m;
 }
@@ -112,8 +123,8 @@ $('login-form').addEventListener('submit', async e => {
 });
 
 function applyState(r) {
-  S.answers = { 1: {}, 2: {}, 3: {} };
-  (r.answers || []).forEach(a => { S.answers[Number(a.slot)] = a; });
+  S.answers = emptyAnswers();
+  (r.answers || []).forEach(a => { if (Number(a.slot) <= MAX_SLOTS) S.answers[Number(a.slot)] = a; });
   S.submittedAt = r.submittedAt || '';
   S.locked = !!r.locked;
   S.request = r.request || { status: '' };
@@ -142,6 +153,13 @@ const guideHTML = () => GRAPH_GUIDE.map(g => `<div class="guide">
   <div class="use">${esc(g.use)}</div>
   <div class="tags"><span class="tag"><b>데이터</b>${esc(g.data)}</span><span class="tag"><b>예</b>${esc(g.ex)}</span></div>
 </div>`).join('');
+if (FREE) {
+  $('rule-1').innerHTML = `데이터 6개 중 골라 <b>시각화 자유롭게 만들기</b> (최대 ${MAX_SLOTS}개, 같은 데이터 여러 번 사용 가능)`;
+  $('rule-2').innerHTML = '<b>그래프 종류 6가지 모두 연습</b> 추천, 같은 종류 여러 번 가능';
+  $('rule-6').innerHTML = '다 못 해도 작성한 만큼 제출 가능. <b>제출 후에는 선생님께 수정 요청</b>, 승인되면 다시 작성 가능';
+  $('guide-sub').textContent = '무엇을 알고 싶은지에 따라 알맞은 그래프가 다름. 여러 종류로 연습하기';
+  $('home-sub').textContent = `시각화 자유롭게 추가 (최대 ${MAX_SLOTS}개) 후 제출`;
+}
 $('guide-grid').innerHTML = guideHTML();
 $('guide-grid2').innerHTML = guideHTML();
 $('guide-ok').onclick = () => goHome();
@@ -159,7 +177,9 @@ function renderHome() {
   const dups = duplicateTypes();
   $('dup-notice').innerHTML = dups.length
     ? `<div class="notice red">${icon('warning', 20)} 그래프 종류 중복 (${esc(dups.join(', '))}), 제출 가능하지만 감점 대상</div>` : '';
-  $('slots').innerHTML = [1, 2, 3].map(n => {
+  const nums = slotNums();
+  $('slots').classList.toggle('many', FREE);
+  $('slots').innerHTML = nums.map(n => {
     const a = S.answers[n], ds = dsById(a.data);
     const done = isComplete(a), started = !!a.data;
     const badge = done ? '<span class="badge green">완성</span>' : started ? '<span class="badge blue">작성 중</span>' : '<span class="badge gray">미작성</span>';
@@ -174,19 +194,26 @@ function renderHome() {
       </dl>
       <button class="btn ${started ? 'soft' : ''} md full" data-slot="${n}">${started ? (done ? '수정하기' : '이어하기') : '시작하기'}</button>
     </div>`;
-  }).join('');
+  }).join('') + (FREE && nums.length < MAX_SLOTS && S.answers[nums.length].data
+    ? `<button class="card slot add-slot" data-slot="${nums.length + 1}"><span class="plus">+</span><b>시각화 추가</b><span class="muted">최대 ${MAX_SLOTS}개</span></button>` : '');
   $('slots').querySelectorAll('button[data-slot]').forEach(b => b.onclick = () => {
     const n = Number(b.dataset.slot);
     if (S.answers[n].data) openWork(n); else openDataSelect(n);
   });
-  const doneN = [1, 2, 3].filter(n => isComplete(S.answers[n])).length;
+  const doneN = nums.filter(n => isComplete(S.answers[n])).length;
+  if (FREE) {
+    $('progress-text').textContent = `시각화 ${nums.filter(n => S.answers[n].data).length}개, 완성 ${doneN}개`;
+    $('submit-hint').textContent = `연습용, 시각화 자유롭게 추가 (최대 ${MAX_SLOTS}개), 미완성도 제출 가능`;
+    $('submit-btn').disabled = false;
+    return;
+  }
   $('progress-text').textContent = `${doneN} / 3 완성`;
-  $('submit-hint').textContent = doneN === 3 ? (dups.length ? '그래프 종류 중복 상태로 제출 가능 (감점 대상)' : '제출 준비 완료') : `미완성 ${3 - doneN}개, 미완성도 제출 가능 (제출 후 수정 불가)`;
+  $('submit-hint').textContent = doneN === 3 ?(dups.length ? '그래프 종류 중복 상태로 제출 가능 (감점 대상)' : '제출 준비 완료') : `미완성 ${3 - doneN}개, 미완성도 제출 가능 (제출 후 수정 불가)`;
   $('submit-btn').disabled = false;
 }
 $('submit-btn').onclick = async () => {
   const dups = duplicateTypes();
-  const left = [1, 2, 3].filter(n => !isComplete(S.answers[n]));
+  const left = slotNums().filter(n => !isComplete(S.answers[n]));
   const warn = (left.length ? `미완성 : 시각화 ${left.join(', ')}. ` : '') + (dups.length ? `그래프 종류 중복 (${dups.join(', ')}), 감점 대상. ` : '');
   const ok = await confirmBox(left.length ? '미완성 상태로 제출' : '제출하기', warn + '제출 후 수정 불가', '제출');
   if (!ok) return;

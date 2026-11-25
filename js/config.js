@@ -7,6 +7,9 @@ const CONFIG = {
   AUTOSAVE_SEC: 30,
   TITLE_SUFFIX: '', // 테스트 사이트는 ' (수행평가 테스트)'
   KEY: 'pa', // 브라우저 저장 이름 (테스트 사이트는 'pa-test')
+  // 시각화 개수. 본 평가는 3개 고정. 연습 사이트는 FREE_SLOTS = true, MAX_SLOTS = 8 (학생이 원하는 만큼 추가, 종류 중복 경고 없음)
+  MAX_SLOTS: 3,
+  FREE_SLOTS: false,
 };
 
 // 내 컴퓨터(localhost)에서 열면 실제 시트 대신 테스트 모드

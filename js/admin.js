@@ -31,10 +31,13 @@ async function call(action, data = {}) {
 /* ---------- 계산 ---------- */
 const classOf = id => `${id[0]}학년 ${Number(id.slice(1, 3))}반`;
 const isComplete = a => !!(a && a.data && a.type && (a.img || a.hasImg) && TEXT_KEYS.every(k => String(a[k] || '').trim()));
+// 본 평가는 시각화 3개, 연습 사이트(FREE_SLOTS)는 최대 MAX_SLOTS개, 종류 중복 표시 안 함
+const FREE = !!CONFIG.FREE_SLOTS, MAX_SLOTS = FREE ? (CONFIG.MAX_SLOTS || 8) : 3;
+const SLOT_NUMS = Array.from({ length: MAX_SLOTS }, (_, i) => i + 1);
 function infoOf(s) {
-  const ans = [1, 2, 3].map(n => A.answers.find(a => a.id === s.id && Number(a.slot) === n) || null);
+  const ans = SLOT_NUMS.map(n => A.answers.find(a => a.id === s.id && Number(a.slot) === n) || null);
   const types = ans.map(a => a && a.type).filter(Boolean);
-  const dup = types.length !== new Set(types).size;
+  const dup = !FREE && types.length !== new Set(types).size;
   const progress = ans.filter(isComplete).length;
   const leave = Number(s.leaveCount || 0);
   const main = !s.firstAt ? '미접속' : s.submittedAt ? '제출' : '작성 중';
@@ -131,8 +134,8 @@ function render() {
       <td class="ck"><input type="checkbox" data-act="check" ${on ? 'checked' : ''}></td>
       <td>${esc(s.id)}</td><td><b>${esc(s.name)}</b></td>
       <td>${s.hasPw ? '<span class="badge gray">설정됨</span> <button class="mini red" data-act="reset">초기화</button>' : '<span class="muted">미설정</span>'}</td>
-      <td><div class="prog"><div class="bar"><i style="width:${inf.progress / 3 * 100}%"></i></div>${inf.progress} / 3</div></td>
-      <td><div class="types">${inf.ans.map(a => a && a.type ? `<span class="badge ${inf.types.filter(t => t === a.type).length > 1 ? 'orange' : 'gray'}">${esc(a.type)}</span>` : '').join('') || '<span class="muted">-</span>'}</div></td>
+      <td>${FREE ? `<b>${inf.progress}</b> <span class="muted">/ ${inf.ans.filter(a => a && a.data).length}개</span>` : `<div class="prog"><div class="bar"><i style="width:${inf.progress / 3 * 100}%"></i></div>${inf.progress} / 3</div>`}</td>
+      <td><div class="types">${inf.ans.map(a => a && a.type ? `<span class="badge ${!FREE && inf.types.filter(t => t === a.type).length > 1 ? 'orange' : 'gray'}">${esc(a.type)}</span>` : '').join('') || '<span class="muted">-</span>'}</div></td>
       <td>${inf.leave ? `<b style="color:${inf.leave >= CONFIG.LEAVE_WARN ? 'var(--red)' : 'inherit'}">${inf.leave}회</b>` : '<span class="muted">0</span>'}</td>
       <td>${badgesHTML(inf)}</td>
       <td><button class="mini" data-act="detail">답안 보기</button></td>
@@ -204,7 +207,9 @@ async function openDetail(id) {
     $('d-req-accept').onclick = async () => { if (await resolveRequest(s.id, true)) $('ov-detail').classList.remove('on'); };
     $('d-req-reject').onclick = async () => { if (await resolveRequest(s.id, false)) $('ov-detail').classList.remove('on'); };
   }
-  $('d-answers').innerHTML = [1, 2, 3].map(n => {
+  // 연습 사이트는 작성한 마지막 번호까지만 보여 줌
+  const lastN = FREE ? Math.max(1, ...r.answers.filter(x => x.data).map(x => Number(x.slot))) : 3;
+  $('d-answers').innerHTML = SLOT_NUMS.slice(0, lastN).map(n => {
     const a = r.answers.find(x => Number(x.slot) === n) || {};
     return `<div class="ans">
       <div class="h">시각화 ${n} ${isComplete(a) ? '<span class="badge green">완성</span>' : a.data ? '<span class="badge blue">작성 중</span>' : '<span class="badge gray">미작성</span>'}</div>
@@ -265,7 +270,7 @@ $('a-csv').onclick = () => {
   if (!list.length) return toast('선택한 학생 없음');
   const classes = [...new Set(list.map(s => classOf(String(s.id))))];
   const head = ['반', '학번', '이름', '상태', '진행', '이탈 횟수', '그래프 중복', '첫 접속', '제출 시간'];
-  [1, 2, 3].forEach(n => head.push(...[`시각화${n} 데이터`, `시각화${n} 그래프 종류`, `시각화${n} X축`, `시각화${n} Y축`, ...TEXT_FIELDS.map(f => `시각화${n} ${f.label}`)]));
+  SLOT_NUMS.forEach(n => head.push(...[`시각화${n} 데이터`, `시각화${n} 그래프 종류`, `시각화${n} X축`, `시각화${n} Y축`, ...TEXT_FIELDS.map(f => `시각화${n} ${f.label}`)]));
   const rows = list.map(s => {
     const inf = infoOf(s);
     const row = [classOf(String(s.id)), s.id, s.name, [inf.main, ...inf.flags].join(' '), inf.progress, inf.leave, inf.dup ? 'O' : '', s.firstAt || '', s.submittedAt || ''];

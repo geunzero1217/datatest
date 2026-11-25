@@ -249,3 +249,12 @@ textarea.input { height: 92px; padding: 12px 14px; font-size: 15px; line-height:
   .ds .rows { margin-top: 6px; }
   #s-data .source { margin-top: 14px; }
 }
+
+/* 연습 사이트 : 시각화 최대 8개 (한 줄에 4개, 작은 그림) */
+.slots.many { grid-template-columns: repeat(4, 1fr); }
+.slots.many .slot .thumb { height: clamp(90px, 15vh, 200px); }
+.slot.add-slot { align-items: center; justify-content: center; gap: 8px; min-height: 200px; border: 2px dashed #B0B8C1; background: transparent; box-shadow: none; cursor: pointer; font: inherit; color: var(--text2, #4E5968); }
+.slot.add-slot:hover { border-color: #3182F6; color: #3182F6; }
+.slot.add-slot .plus { width: 48px; height: 48px; border-radius: 50%; background: #E8F3FF; color: #3182F6; font-size: 30px; font-weight: 700; line-height: 46px; text-align: center; }
+.slot.add-slot b { font-size: 18px; }
+@media (max-width: 900px) { .slots.many { grid-template-columns: 1fr 1fr; } }

@@ -1,6 +1,8 @@
 // 수행평가 테스트(연습) 사이트 설정 : ../js/config.js 다음에 불러와서 덮어씀
 CONFIG.API_URL = 'https://script.google.com/macros/s/AKfycbzrwW11Tc83_DS5jnBq8nWQlakx3-XuobeWwMs-6YkMS3frxFDb1YsikrZngOUK2Cnxgw/exec';
 CONFIG.KEY = 'pa-test';
+CONFIG.MAX_SLOTS = 8;
+CONFIG.FREE_SLOTS = true;
 CONFIG.TITLE_SUFFIX = ' (수행평가 테스트)';
 if (['localhost', '127.0.0.1'].includes(location.hostname)) CONFIG.API_URL = '';
 
